@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAME - Accesso</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/effects.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Left Side - Login Form -->
+        <div class="login-form-section">
+            <div class="particles">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
+            <div class="login-form-container animate-card-entrance">
+                <!-- Logo -->
+                <div class="login-logo">
+                    <div class="login-logo-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+                                    <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#00D9B1;stop-opacity:1" />
+                                </linearGradient>
+                                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0066FF" flood-opacity="0.3"/>
+                                </filter>
+                            </defs>
+                            <circle cx="24" cy="24" r="22" fill="url(#logoGradient)" filter="url(#shadow)"/>
+                            <path d="M18 16C21.866 16 25 19.134 25 23C25 26.866 21.866 30 18 30"
+                                  stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                            <path d="M29 30L33 16L37 30"
+                                  stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            <path d="M31 26H35"
+                                  stroke="white" stroke-width="3" stroke-linecap="round"/>
+                            <circle cx="15" cy="12" r="2" fill="white" opacity="0.8"/>
+                            <circle cx="33" cy="36" r="2" fill="white" opacity="0.8"/>
+                            <line x1="17" y1="14" x2="31" y2="34" stroke="white" stroke-width="1.5" opacity="0.6" stroke-dasharray="2,2"/>
+                            <circle cx="38" cy="10" r="1.5" fill="white" opacity="0.7"/>
+                            <circle cx="10" cy="38" r="1.5" fill="white" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <h1 class="login-title gradient-text animate-text-glow">CAME</h1>
+                    <p class="login-subtitle">Communication and Management Enterprise</p>
+                </div>
+
+                <!-- Welcome Message -->
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <h2 class="gradient-text-primary" style="font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: 600;">Benvenuto in CAME</h2>
+                    <p style="color: #6C757D; font-size: 1rem;">Accedi al tuo account per continuare</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="login-form">
+                    <div class="input-group">
+                        <input type="email" id="email" name="email" placeholder=" " required>
+                        <label for="email">Email</label>
+                        <div class="input-icon">
+                            <i data-lucide="mail"></i>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Password</label>
+                        <div class="input-icon">
+                            <i data-lucide="lock"></i>
+                        </div>
+                    </div>
+
+                    <div class="login-remember">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="rememberMe" name="rememberMe" style="width: auto;">
+                            <span style="font-size: 0.9rem; color: var(--neutral-700);">Ricordami</span>
+                        </label>
+                        <a href="#" id="forgotPasswordLink" style="font-size: 0.9rem; color: var(--primary-600); text-decoration: none;">
+                            Password dimenticata?
+                        </a>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-full hover-glow-primary">
+                        Accedi
+                    </button>
+
+                    <!-- Register Link -->
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <p style="color: #6C757D; font-size: 0.9rem;">
+                            Non hai un account? 
+                            <a href="register.html" style="color: var(--primary-600); text-decoration: none; font-weight: 600;">
+                                Registrati
+                            </a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Side - Hero Section -->
+        <div class="login-hero-section gradient-overlay">
+            <div class="morphing-bg" style="width: 300px; height: 300px; top: 10%; left: 20%;"></div>
+            <div class="morphing-bg" style="width: 200px; height: 200px; bottom: 20%; right: 10%; animation-delay: -6s;"></div>
+            <div class="hero-background"></div>
+            <div class="login-hero-content animate-fade-in-up floating-element">
+                <h1 class="hero-title">La tua azienda,<br>organizzata</h1>
+                <p class="hero-subtitle">Gestisci dipendenti, orari e richieste in un'unica piattaforma moderna e intuitiva</p>
+
+                <div class="hero-features">
+                    <div class="hero-feature animate-fade-in-left">
+                        <i data-lucide="users" style="width: 24px; height: 24px;"></i>
+                        <span>Gestione del personale</span>
+                    </div>
+                    <div class="hero-feature animate-fade-in-left" style="animation-delay: 0.2s;">
+                        <i data-lucide="clock" style="width: 24px; height: 24px;"></i>
+                        <span>Tracciamento delle ore</span>
+                    </div>
+                    <div class="hero-feature animate-fade-in-left" style="animation-delay: 0.4s;">
+                        <i data-lucide="calendar-check" style="width: 24px; height: 24px;"></i>
+                        <span>Richieste e approvazioni</span>
+                    </div>
+                    <div class="hero-feature animate-fade-in-left" style="animation-delay: 0.6s;">
+                        <i data-lucide="bar-chart-3" style="width: 24px; height: 24px;"></i>
+                        <span>Report e analytics</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+
+    <!-- JavaScript Modules -->
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Login form handling
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const email = String(formData.get('email') || '').trim().toLowerCase();
+            const password = String(formData.get('password') || '').trim();
+            const rememberMe = formData.get('rememberMe');
+
+            // Validate form
+            if (!email || !password) {
+                if (window.UI && window.UI.showToast) {
+                    window.UI.showToast('Inserisci email e password', 'error');
+                } else {
+                    alert('Inserisci email e password');
+                }
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Accesso in corso...';
+
+            try {
+                const result = await window.Auth.login(email, password);
+
+                if (result.success) {
+                    // Store remember me preference
+                    if (rememberMe) {
+                        localStorage.setItem('came_remember_me', 'true');
+                    }
+
+                    // Show success toast
+                    if (window.UI && window.UI.showToast) {
+                        window.UI.showToast(result.message, 'success');
+                    }
+
+                    // Redirect to appropriate dashboard
+                    setTimeout(() => {
+                        const dashboardUrl = result.user.role === 'admin'
+                            ? 'admin-dashboard.html'
+                            : 'employee-dashboard.html';
+                        window.location.href = dashboardUrl;
+                    }, 1000);
+
+                } else {
+                    if (window.UI && window.UI.showToast) {
+                        window.UI.showToast(result.message, 'error');
+                    } else {
+                        alert(result.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                if (window.UI && window.UI.showToast) {
+                    window.UI.showToast('Errore durante l\'accesso. Riprova.', 'error');
+                } else {
+                    alert('Errore durante l\'accesso. Riprova.');
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // Forgot password handler
+        document.getElementById('forgotPasswordLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            
+            if (!email) {
+                if (window.UI && window.UI.showToast) {
+                    window.UI.showToast('Inserisci la tua email', 'warning');
+                } else {
+                    alert('Inserisci la tua email prima di richiedere il reset della password');
+                }
+                return;
+            }
+            
+            const confirmed = confirm(`Inviare email di reset password a ${email}?`);
+            if (!confirmed) return;
+            
+            try {
+                const result = await window.Auth.resetPassword(email);
+                
+                if (result.success) {
+                    if (window.UI && window.UI.showToast) {
+                        window.UI.showToast(result.message, 'success');
+                    } else {
+                        alert(result.message);
+                    }
+                } else {
+                    if (window.UI && window.UI.showToast) {
+                        window.UI.showToast(result.message, 'error');
+                    } else {
+                        alert(result.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Password reset error:', error);
+                if (window.UI && window.UI.showToast) {
+                    window.UI.showToast('Errore durante il reset della password', 'error');
+                } else {
+                    alert('Errore durante il reset della password');
+                }
+            }
+        });
+
+        // Handle "Enter" key press in form inputs
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.closest('#loginForm')) {
+                e.preventDefault();
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // Initialize animations on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add stagger animation to form elements
+            const formElements = document.querySelectorAll('.login-form .input-group, .login-form .login-remember, .login-form .btn');
+            formElements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.animation = `fadeInUp 0.6s ease-out forwards ${index * 0.1}s`;
+            });
+
+            // Auto-fill if remember me was set
+            const rememberMe = localStorage.getItem('came_remember_me');
+            if (rememberMe) {
+                document.getElementById('rememberMe').checked = true;
+            }
+
+            // Focus first input
+            setTimeout(() => {
+                document.getElementById('email').focus();
+            }, 500);
+        });
+
+        // Prevent access if already logged in
+        if (window.Auth && window.Auth.isAuthenticated()) {
+            const user = window.Auth.getCurrentUser();
+            if (user) {
+                const dashboardUrl = user.role === 'admin' ? 'admin-dashboard.html' : 'employee-dashboard.html';
+                window.location.replace(dashboardUrl);
+            }
+        }
+    </script>
+</body>
+</html>

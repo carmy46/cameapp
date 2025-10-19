@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione Ore - CAME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/effects.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00D9B1;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="24" cy="24" r="22" fill="url(#logoGradient)"/>
+                        <path d="M18 16C21.866 16 25 19.134 25 23C25 26.866 21.866 30 18 30"
+                              stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M29 30L33 16L37 30"
+                              stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M31 26H35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="logo-text">CAME</div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principale</div>
+                    <a href="employee-dashboard.html" class="nav-item">
+                        <i data-lucide="home" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Dashboard</span>
+                    </a>
+                    <a href="timesheet.html" class="nav-item">
+                        <i data-lucide="clock" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Ore di Lavoro</span>
+                    </a>
+                    <a href="time-registration.html" class="nav-item active">
+                        <i data-lucide="plus-circle" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Registrazione Ore</span>
+                    </a>
+                    <a href="requests.html" class="nav-item">
+                        <i data-lucide="calendar-check" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Richieste</span>
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="nav-item w-full" onclick="window.Auth.logout()" style="border: none; background: none; text-align: left;">
+                    <i data-lucide="log-out" class="nav-item-icon"></i>
+                    <span class="sidebar-label">Esci</span>
+                </button>
+            </div>
+
+            <button class="sidebar-toggle" aria-label="Chiudi menu laterale">
+                <i data-lucide="chevron-left"></i>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" data-sidebar-toggle aria-label="Apri menu laterale">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h1 class="header-title">Registrazione Ore</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-outline btn-sm" onclick="window.Auth.logout()" title="Esci dall'applicazione">
+                        <i data-lucide="log-out"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="page-content">
+                <!-- Registration Form -->
+                <div class="card card-text-dark">
+                    <div class="card-header text-center">
+                        <div class="mb-4">
+                            <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full mx-auto flex items-center justify-center mb-4">
+                                <i data-lucide="clock" class="text-white w-8 h-8"></i>
+                            </div>
+                            <h3 class="card-title text-2xl">Nuovo Registro Ore</h3>
+                            <p class="card-subtitle">Compila i dettagli della tua giornata lavorativa</p>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <form id="timeRegistrationForm">
+                            <!-- Sezione 1: Informazioni Generali -->
+                            <div class="form-section mb-8">
+                                <div class="form-section-header">
+                                    <i data-lucide="info" class="w-5 h-5 text-primary-600"></i>
+                                    <h4 class="form-section-title">Informazioni Generali</h4>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                    <!-- Data -->
+                                    <div class="form-group">
+                                        <label for="workDate" class="form-label-enhanced">
+                                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                                            Data di Lavoro
+                                            <span class="required">*</span>
+                                        </label>
+                                        <input type="date" id="workDate" name="workDate" class="form-input-enhanced" required
+                                               title="Seleziona la data in cui hai lavorato">
+                                    </div>
+
+                                    <!-- Attività -->
+                                    <div class="form-group">
+                                        <label for="activity" class="form-label-enhanced">
+                                            <i data-lucide="briefcase" class="w-4 h-4"></i>
+                                            Tipo di Attività
+                                            <span class="required">*</span>
+                                        </label>
+                                        <select id="activity" name="activity" class="form-input-enhanced" required>
+                                            <option value="">Seleziona il tipo di attività...</option>
+                                            <option value="Pulizia">🧹 Pulizia</option>
+                                            <option value="Pulizia fino">✨ Pulizia fino</option>
+                                            <option value="Lavaggio moquette">🪣 Lavaggio moquette</option>
+                                            <option value="Lavaggio vetri">🪟 Lavaggio vetri</option>
+                                            <option value="Sgombero">📦 Sgombero</option>
+                                            <option value="Trasloco">🚛 Trasloco</option>
+                                            <option value="Pittura">🎨 Pittura</option>
+                                            <option value="Giardinaggio">🌱 Giardinaggio</option>
+                                            <option value="Muratura">🧱 Muratura</option>
+                                            <option value="Facchinaggio">📋 Facchinaggio</option>
+                                            <option value="Portineria">🏢 Portineria</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sezione 2: Luogo di Lavoro -->
+                            <div class="form-section mb-8">
+                                <div class="form-section-header">
+                                    <i data-lucide="map-pin" class="w-5 h-5 text-secondary-600"></i>
+                                    <h4 class="form-section-title">Luogo di Lavoro</h4>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="form-group">
+                                        <label for="location" class="form-label-enhanced">
+                                            <i data-lucide="building" class="w-4 h-4"></i>
+                                            Seleziona Luogo
+                                            <span class="required">*</span>
+                                        </label>
+                                        <select id="location" name="location" class="form-input-enhanced" required onchange="toggleCustomLocation()">
+                                            <option value="">Seleziona il luogo di lavoro...</option>
+                                            <option value="Alevax">🏢 Alevax</option>
+                                            <option value="Amico Cristiano Casa">🏠 Amico Cristiano Casa</option>
+                                            <option value="Amico Cristiano Ufficio">🏢 Amico Cristiano Ufficio</option>
+                                            <option value="Architech">🏗️ Architech</option>
+                                            <option value="B&B Colonna">🏨 B&B Colonna</option>
+                                            <option value="B&B Giuseppe">🏨 B&B Giuseppe</option>
+                                            <option value="B&B Nicolas">🏨 B&B Nicolas</option>
+                                            <option value="B&B Niguarda">🏨 B&B Niguarda</option>
+                                            <option value="B&B Veronesi appartamento A">🏨 B&B Veronesi appartamento A</option>
+                                            <option value="B&B Veronesi appartamento B">🏨 B&B Veronesi appartamento B</option>
+                                            <option value="Bar radetzky">☕ Bar radetzky</option>
+                                            <option value="Caresmed">🏥 Caresmed</option>
+                                            <option value="Casa Andrea">🏠 Casa Andrea</option>
+                                            <option value="Casa Nicolas">🏠 Casa Nicolas</option>
+                                            <option value="Ceccarelli">🏢 Ceccarelli</option>
+                                            <option value="Condomini Via Vialba+ Ufficio">🏢 Condomini Via Vialba+ Ufficio</option>
+                                            <option value="Condominio Baranzate">🏘️ Condominio Baranzate</option>
+                                            <option value="Condominio Green Opificio">🏘️ Condominio Green Opificio</option>
+                                            <option value="Condominio Losanna">🏘️ Condominio Losanna</option>
+                                            <option value="Condominio Via Garibaldi">🏘️ Condominio Via Garibaldi</option>
+                                            <option value="Condominio Via Morandi">🏘️ Condominio Via Morandi</option>
+                                            <option value="Cristiano">🏠 Cristiano</option>
+                                            <option value="dama">🏢 dama</option>
+                                            <option value="Daniele bovisa casa">🏠 Daniele bovisa casa</option>
+                                            <option value="Daniele bovisa ufficio">🏢 Daniele bovisa ufficio</option>
+                                            <option value="E-esolution">🏢 E-esolution</option>
+                                            <option value="Geraldine">🏠 Geraldine</option>
+                                            <option value="Lesmo">🏢 Lesmo</option>
+                                            <option value="Magazzino Novate">📦 Magazzino Novate</option>
+                                            <option value="Magazzino Patrizia">📦 Magazzino Patrizia</option>
+                                            <option value="Mamma Cristiano">🏠 Mamma Cristiano</option>
+                                            <option value="Monterosa">🏢 Monterosa</option>
+                                            <option value="Panettiera">🥖 Panettiera</option>
+                                            <option value="Pattumiere">🗑️ Pattumiere</option>
+                                            <option value="PoliHub">🏢 PoliHub</option>
+                                            <option value="PolyDesign">🎨 PolyDesign</option>
+                                            <option value="Portineria Tara rossa">🏢 Portineria Tara rossa</option>
+                                            <option value="Quimark">🏢 Quimark</option>
+                                            <option value="Residence">🏨 Residence</option>
+                                            <option value="Tara rossa Scale">🏢 Tara rossa Scale</option>
+                                            <option value="Todeschini">🏢 Todeschini</option>
+                                            <option value="custom">➕ Altro (inserisci manualmente)</option>
+                                        </select>
+                                        <input type="text" id="customLocation" name="customLocation" class="form-input-enhanced mt-3" placeholder="Inserisci il luogo personalizzato..." style="display: none;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sezione 3: Orari -->
+                            <div class="form-section mb-8">
+                                <div class="form-section-header">
+                                    <i data-lucide="clock" class="w-5 h-5 text-success-600"></i>
+                                    <h4 class="form-section-title">Orari di Lavoro</h4>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                    <!-- Ora Inizio -->
+                                    <div class="form-group">
+                                        <label for="startTime" class="form-label-enhanced">
+                                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                                            Ora di Inizio
+                                            <span class="required">*</span>
+                                        </label>
+                                        <input type="time" id="startTime" name="startTime" class="form-input-enhanced" required>
+                                    </div>
+
+                                    <!-- Ora Fine -->
+                                    <div class="form-group">
+                                        <label for="endTime" class="form-label-enhanced">
+                                            <i data-lucide="stop-circle" class="w-4 h-4"></i>
+                                            Ora di Fine
+                                            <span class="required">*</span>
+                                        </label>
+                                        <input type="time" id="endTime" name="endTime" class="form-input-enhanced" required>
+                                    </div>
+
+                                    <!-- Inizio Pausa -->
+                                    <div class="form-group">
+                                        <label for="breakStart" class="form-label-enhanced">
+                                            <i data-lucide="pause-circle" class="w-4 h-4"></i>
+                                            Inizio Pausa
+                                            <span class="optional">(opzionale)</span>
+                                        </label>
+                                        <input type="time" id="breakStart" name="breakStart" class="form-input-enhanced">
+                                    </div>
+
+                                    <!-- Fine Pausa -->
+                                    <div class="form-group">
+                                        <label for="breakEnd" class="form-label-enhanced">
+                                            <i data-lucide="play-circle" class="w-4 h-4"></i>
+                                            Fine Pausa
+                                            <span class="optional">(opzionale)</span>
+                                        </label>
+                                        <input type="time" id="breakEnd" name="breakEnd" class="form-input-enhanced">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sezione 4: Note Aggiuntive -->
+                            <div class="form-section mb-8">
+                                <div class="form-section-header">
+                                    <i data-lucide="file-text" class="w-5 h-5 text-warning-600"></i>
+                                    <h4 class="form-section-title">Note Aggiuntive</h4>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="form-group">
+                                        <label for="notes" class="form-label-enhanced">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                            Descrizione Dettagliata
+                                            <span class="optional">(opzionale)</span>
+                                        </label>
+                                        <textarea id="notes" name="notes" class="form-input-enhanced" rows="4" placeholder="Aggiungi note, dettagli sul lavoro svolto, materiali utilizzati, problematiche riscontrate..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sezione 5: Riepilogo -->
+                            <div class="form-section mb-8">
+                                <div class="time-summary-card">
+                                    <div class="time-summary-header">
+                                        <i data-lucide="calculator" class="w-6 h-6 text-primary-600"></i>
+                                        <h4 class="text-lg font-semibold text-neutral-900">Riepilogo Orario</h4>
+                                    </div>
+                                    <div class="time-summary-body">
+                                        <div class="time-summary-item">
+                                            <div class="time-summary-label">
+                                                <i data-lucide="clock" class="w-4 h-4"></i>
+                                                Ore Totali Lavorate
+                                            </div>
+                                            <div id="totalHours" class="time-summary-value primary">0:00</div>
+                                        </div>
+                                        <div class="time-summary-item">
+                                            <div class="time-summary-label">
+                                                <i data-lucide="coffee" class="w-4 h-4"></i>
+                                                Tempo di Pausa
+                                            </div>
+                                            <div id="breakDuration" class="time-summary-value secondary">0:00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" onclick="resetForm()">
+                                    <i data-lucide="rotate-ccw"></i>
+                                    Azzera Tutto
+                                </button>
+                                <button type="submit" class="btn-primary">
+                                    <i data-lucide="save"></i>
+                                    Salva Registrazione
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Registrations -->
+                <div class="card mt-6 card-text-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">Registrazioni Recenti</h3>
+                        <p class="card-subtitle">Ultime 10 registrazioni</p>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Luogo</th>
+                                    <th>Attività</th>
+                                    <th>Orario</th>
+                                    <th>Ore Totali</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentRegistrationsTable">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+
+    <script>
+        const currentUser = window.Auth.getCurrentUser();
+        if (!currentUser || currentUser.role !== 'employee') {
+            console.log('Access denied: Employee role required for time registration');
+            localStorage.removeItem('came_session');
+            window.location.replace('index.html');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setDefaultDate();
+            setupTimeCalculation();
+            loadRecentRegistrations();
+        });
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('workDate').value = today;
+        }
+
+        function toggleCustomLocation() {
+            const locationSelect = document.getElementById('location');
+            const customLocationInput = document.getElementById('customLocation');
+
+            if (locationSelect.value === 'custom') {
+                customLocationInput.style.display = 'block';
+                customLocationInput.required = true;
+                customLocationInput.focus();
+            } else {
+                customLocationInput.style.display = 'none';
+                customLocationInput.required = false;
+                customLocationInput.value = '';
+            }
+        }
+
+        function setupTimeCalculation() {
+            const timeInputs = ['startTime', 'endTime', 'breakStart', 'breakEnd'];
+            timeInputs.forEach(id => {
+                document.getElementById(id).addEventListener('change', calculateTotalHours);
+            });
+        }
+
+        function calculateTotalHours() {
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const breakStart = document.getElementById('breakStart').value;
+            const breakEnd = document.getElementById('breakEnd').value;
+
+            if (!startTime || !endTime) {
+                document.getElementById('totalHours').textContent = '0:00';
+                document.getElementById('breakDuration').textContent = '0:00';
+                return;
+            }
+
+            const start = timeToMinutes(startTime);
+            const end = timeToMinutes(endTime);
+
+            let totalMinutes = end - start;
+            let breakMinutes = 0;
+
+            if (breakStart && breakEnd) {
+                const breakStartMin = timeToMinutes(breakStart);
+                const breakEndMin = timeToMinutes(breakEnd);
+                breakMinutes = breakEndMin - breakStartMin;
+                totalMinutes -= breakMinutes;
+            }
+
+            if (totalMinutes < 0) totalMinutes = 0;
+            if (breakMinutes < 0) breakMinutes = 0;
+
+            document.getElementById('totalHours').textContent = minutesToTime(totalMinutes);
+            document.getElementById('breakDuration').textContent = minutesToTime(breakMinutes);
+        }
+
+        function timeToMinutes(timeString) {
+            const [hours, minutes] = timeString.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function minutesToTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}:${mins.toString().padStart(2, '0')}`;
+        }
+
+        function resetForm() {
+            document.getElementById('timeRegistrationForm').reset();
+            setDefaultDate();
+            document.getElementById('customLocation').style.display = 'none';
+            document.getElementById('customLocation').required = false;
+            calculateTotalHours();
+        }
+
+        document.getElementById('timeRegistrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const registrationData = {
+                id: Date.now(),
+                userId: currentUser.id,
+                userName: `${currentUser.firstName} ${currentUser.lastName}`,
+                userEmail: currentUser.email,
+                date: formData.get('workDate'),
+                location: formData.get('location') === 'custom' ? formData.get('customLocation') : formData.get('location'),
+                startTime: formData.get('startTime'),
+                endTime: formData.get('endTime'),
+                breakStart: formData.get('breakStart') || null,
+                breakEnd: formData.get('breakEnd') || null,
+                activity: formData.get('activity'),
+                notes: formData.get('notes') || '',
+                totalHours: document.getElementById('totalHours').textContent,
+                submittedAt: new Date().toISOString()
+            };
+
+            // Validate required fields
+            if (!registrationData.date || !registrationData.location || !registrationData.startTime ||
+                !registrationData.endTime || !registrationData.activity) {
+                window.UI.showToast('Compila tutti i campi obbligatori: Data, Luogo, Attività, Orario Inizio e Fine', 'error');
+                return;
+            }
+
+            // Save to localStorage and Firestore
+            await saveTimeRegistration(registrationData);
+
+            console.log('✅ Registrazione salvata:', registrationData);
+            window.UI.showToast('Registrazione salvata con successo', 'success');
+            resetForm();
+            loadRecentRegistrations();
+        });
+
+        async function saveTimeRegistration(data) {
+            try {
+                // Carica registrazioni esistenti da Firestore
+                let registrations = await window.Storage.getTimeRegistrations(currentUser.id);
+
+                // Assicurati che sia un array
+                if (!Array.isArray(registrations)) {
+                    registrations = [];
+                }
+
+                registrations.unshift(data);
+
+                // Keep only last 100 registrations
+                if (registrations.length > 100) {
+                    registrations = registrations.slice(0, 100);
+                }
+
+                // Salva su Firestore
+                await window.Storage.saveTimeRegistrations(currentUser.id, registrations);
+                console.log('✅ Registrazione ore salvata su Firestore');
+            } catch (error) {
+                console.error('⚠️ Errore salvataggio registrazione:', error);
+            }
+        }
+
+        async function loadRecentRegistrations() {
+            try {
+                // Carica da Firestore
+                let registrations = await window.Storage.getTimeRegistrations(currentUser.id);
+
+                // Assicurati che sia un array
+                if (!Array.isArray(registrations)) {
+                    registrations = [];
+                }
+
+                const tbody = document.getElementById('recentRegistrationsTable');
+
+                if (registrations.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-neutral-500">Nessuna registrazione trovata</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = registrations.slice(0, 10).map(reg => `
+                <tr>
+                    <td>${window.UI.formatDate(reg.date)}</td>
+                    <td>${reg.location}</td>
+                    <td>${reg.activity}</td>
+                    <td>${reg.startTime} - ${reg.endTime}</td>
+                    <td class="font-medium">${reg.totalHours}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="deleteRegistration(${reg.id})" title="Elimina">
+                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+            } catch (error) {
+                console.error('⚠️ Errore caricamento registrazioni:', error);
+                const tbody = document.getElementById('recentRegistrationsTable');
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-error-500">Errore caricamento dati</td></tr>';
+            }
+        }
+
+        async function deleteRegistration(id) {
+            if (confirm('Sei sicuro di voler eliminare questa registrazione?')) {
+                try {
+                    let registrations = await window.Storage.getTimeRegistrations(currentUser.id);
+
+                    // Assicurati che sia un array
+                    if (!Array.isArray(registrations)) {
+                        registrations = [];
+                    }
+
+                    registrations = registrations.filter(reg => reg.id !== id);
+                    await window.Storage.saveTimeRegistrations(currentUser.id, registrations);
+
+                    window.UI.showToast('Registrazione eliminata', 'info');
+                    await loadRecentRegistrations();
+                } catch (error) {
+                    console.error('⚠️ Errore eliminazione registrazione:', error);
+                    window.UI.showToast('Impossibile eliminare la bozza. Verifica la connessione e riprova.', 'error');
+                }
+            }
+        }
+    </script>
+
+    <!-- Enhanced Form Styles -->
+    <style>
+        /* Form Sections */
+        .form-section {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95));
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(203, 213, 225, 0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+        }
+
+        .form-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(0, 102, 255, 0.1);
+        }
+
+        .form-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        /* Enhanced Form Labels */
+        .form-label-enhanced {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+        }
+
+        .required {
+            color: #ef4444;
+            font-weight: 700;
+        }
+
+        .optional {
+            color: #6b7280;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        /* Enhanced Form Inputs */
+        .form-input-enhanced {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            background: rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .form-input-enhanced:focus {
+            outline: none;
+            border-color: #0066ff;
+            box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .form-input-enhanced:hover:not(:focus) {
+            border-color: #d1d5db;
+            background: rgba(255,255,255,0.95);
+        }
+
+        /* Time Summary Card */
+        .time-summary-card {
+            background: linear-gradient(135deg, #0066ff 0%, #8b5cf6 50%, #00d9b1 100%);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            box-shadow: 0 8px 24px rgba(0, 102, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .time-summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .time-summary-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .time-summary-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .time-summary-item {
+            text-align: center;
+            padding: 16px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .time-summary-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .time-summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .time-summary-value.primary {
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .time-summary-value.secondary {
+            color: #f1f5f9;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Enhanced Buttons */
+        .form-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            padding-top: 24px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0066ff 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+            background: linear-gradient(135deg, #0052cc 0%, #7c3aed 100%);
+        }
+
+        .btn-secondary {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(107, 114, 128, 0.2);
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Enhanced Select Options with Emojis */
+        .form-input-enhanced option {
+            padding: 8px;
+            font-size: 0.875rem;
+        }
+
+        /* Card Header Enhancement */
+        .card-header.text-center {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95));
+            border-radius: 20px 20px 0 0;
+            padding: 32px 24px;
+            border-bottom: 1px solid rgba(203, 213, 225, 0.3);
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .form-section {
+                padding: 16px;
+            }
+
+            .time-summary-body {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .time-summary-value {
+                font-size: 1.5rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-primary, .btn-secondary {
+                justify-content: center;
+            }
+        }
+
+        /* Animation for form load */
+        .form-section {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .form-section:nth-child(1) { animation-delay: 0.1s; }
+        .form-section:nth-child(2) { animation-delay: 0.2s; }
+        .form-section:nth-child(3) { animation-delay: 0.3s; }
+        .form-section:nth-child(4) { animation-delay: 0.4s; }
+        .form-section:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+</html>

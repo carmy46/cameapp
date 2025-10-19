@@ -1,0 +1,371 @@
+/* Advanced Visual Effects & Glassmorphism */
+
+/* ===== GLASSMORPHISM EFFECTS ===== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-2xl);
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.37),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 1.5s ease;
+}
+
+.glass-card:hover::before {
+  left: 100%;
+}
+
+.glass-sidebar {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(30px);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(30px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ===== FLOATING ELEMENTS ===== */
+.floating-element {
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating-element:nth-child(2n) {
+  animation-delay: -2s;
+  animation-duration: 8s;
+}
+
+.floating-element:nth-child(3n) {
+  animation-delay: -4s;
+  animation-duration: 7s;
+}
+
+/* ===== GRADIENT TEXT ===== */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 3s ease infinite;
+}
+
+.gradient-text-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== MORPHING SHAPES ===== */
+.morphing-bg {
+  position: absolute;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
+  animation: morphing 12s ease-in-out infinite;
+  filter: blur(1px);
+}
+
+/* ===== ADVANCED HOVER EFFECTS ===== */
+.hover-glow-primary {
+  transition: all var(--transition-normal);
+}
+
+.hover-glow-primary:hover {
+  box-shadow:
+    0 0 20px rgba(102, 126, 234, 0.4),
+    0 0 40px rgba(102, 126, 234, 0.2),
+    0 8px 32px rgba(31, 38, 135, 0.3);
+  transform: translateY(-4px) scale(1.02);
+}
+
+.hover-glow-success {
+  transition: all var(--transition-normal);
+}
+
+.hover-glow-success:hover {
+  box-shadow:
+    0 0 20px rgba(16, 185, 129, 0.4),
+    0 0 40px rgba(16, 185, 129, 0.2);
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* ===== PARTICLE SYSTEM ===== */
+.particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 50%;
+  animation: floating-particles 12s ease-in-out infinite;
+}
+
+.particle:nth-child(1) { top: 10%; left: 20%; animation-delay: 0s; }
+.particle:nth-child(2) { top: 20%; left: 70%; animation-delay: -2s; }
+.particle:nth-child(3) { top: 60%; left: 30%; animation-delay: -4s; }
+.particle:nth-child(4) { top: 80%; left: 80%; animation-delay: -6s; }
+.particle:nth-child(5) { top: 40%; left: 10%; animation-delay: -8s; }
+
+/* ===== NEON EFFECTS ===== */
+.neon-border {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.neon-border::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #4facfe);
+  border-radius: inherit;
+  z-index: -1;
+  animation: gradient-shift 3s linear infinite;
+  background-size: 400% 400%;
+}
+
+/* ===== LOADING SHIMMER EFFECT ===== */
+.shimmer-loading {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ===== ADVANCED BUTTON EFFECTS ===== */
+.btn-glassmorphic {
+  background: rgba(102, 126, 234, 0.15);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: #1F2937;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glassmorphic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.btn-glassmorphic:hover::before {
+  left: 100%;
+}
+
+.btn-glassmorphic:hover {
+  background: rgba(102, 126, 234, 0.25);
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.37);
+  transform: translateY(-2px);
+  color: #111827;
+}
+
+/* ===== CARD STACK EFFECT ===== */
+.card-stack {
+  position: relative;
+}
+
+.card-stack::before,
+.card-stack::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: inherit;
+  z-index: -1;
+  backdrop-filter: blur(10px);
+}
+
+.card-stack::after {
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  z-index: -2;
+}
+
+/* ===== GLOWING BORDERS ===== */
+.glow-border-primary {
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  box-shadow:
+    0 0 10px rgba(102, 126, 234, 0.1),
+    inset 0 0 10px rgba(102, 126, 234, 0.05);
+}
+
+.glow-border-primary:hover {
+  border-color: rgba(102, 126, 234, 0.6);
+  box-shadow:
+    0 0 20px rgba(102, 126, 234, 0.3),
+    inset 0 0 20px rgba(102, 126, 234, 0.1);
+}
+
+/* ===== BACKDROP FILTERS ===== */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+}
+
+.backdrop-blur-lg {
+  backdrop-filter: blur(20px);
+}
+
+.backdrop-blur-xl {
+  backdrop-filter: blur(30px);
+}
+
+/* ===== GRADIENT OVERLAYS ===== */
+.gradient-overlay {
+  position: relative;
+}
+
+.gradient-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(102, 126, 234, 0.1) 0%,
+    rgba(240, 147, 251, 0.1) 100%
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ===== INTERACTIVE ELEMENTS ===== */
+.interactive-scale {
+  transition: transform var(--transition-fast);
+}
+
+.interactive-scale:hover {
+  transform: scale(1.05);
+}
+
+.interactive-scale:active {
+  transform: scale(0.98);
+}
+
+/* ===== STATUS INDICATORS ===== */
+.status-online {
+  position: relative;
+}
+
+.status-online::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #10B981;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  animation: pulse 2s infinite;
+}
+
+.status-busy::after {
+  background: #EF4444;
+}
+
+.status-away::after {
+  background: #F59E0B;
+}
+
+/* ===== MODERN SCROLLBAR ===== */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.4);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.6);
+}
+
+/* ===== MEDIA QUERIES FOR REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  .morphing-bg,
+  .animate-particles,
+  .animate-float,
+  .animate-gradient-shift,
+  .floating-element {
+    animation: none !important;
+  }
+
+  .glass-card::before,
+  .btn-glassmorphic::before {
+    display: none;
+  }
+}

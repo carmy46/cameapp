@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approvazioni - CAME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- XLSX Library for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/effects.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Admin Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00D9B1;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="24" cy="24" r="22" fill="url(#logoGradient)"/>
+                        <path d="M18 16C21.866 16 25 19.134 25 23C25 26.866 21.866 30 18 30" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M29 30L33 16L37 30" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M31 26H35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="logo-text">CAME</div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a href="admin-dashboard.html" class="nav-item">
+                        <i data-lucide="bar-chart-3" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Panoramica</span>
+                    </a>
+                    <a href="admin-approvals.html" class="nav-item active">
+                        <i data-lucide="check-circle" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Approvazioni</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestione</div>
+                    <a href="#" class="nav-item">
+                        <i data-lucide="users" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Dipendenti</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i data-lucide="calendar" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Pianificazione</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="nav-item w-full" onclick="window.Auth.logout()" style="border: none; background: none; text-align: left;">
+                    <i data-lucide="log-out" class="nav-item-icon"></i>
+                    <span class="sidebar-label">Esci</span>
+                </button>
+            </div>
+
+            <button class="sidebar-toggle" aria-label="Chiudi menu laterale">
+                <i data-lucide="chevron-left"></i>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" data-sidebar-toggle aria-label="Apri menu laterale">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h1 class="header-title">Gestione Approvazioni</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-outline btn-sm" onclick="exportToExcel()">
+                        <i data-lucide="download"></i>
+                        Esporta Excel
+                    </button>
+                    <button class="btn btn-outline btn-sm" onclick="window.Auth.logout()" title="Esci dall'applicazione">
+                        <i data-lucide="log-out"></i>
+                        <span>Logout</span>
+                    </button>
+
+                    <button class="btn btn-primary" onclick="approveSelected()" id="approveSelectedBtn" disabled>
+                        <i data-lucide="check"></i>
+                        Approva Selezionate
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Filters -->
+                <div class="card mb-6 card-text-dark">
+                    <div class="flex gap-4 items-center">
+                        <select id="typeFilter" class="form-control" onchange="filterRequests()">
+                            <option value="">Tutti i tipi</option>
+                            <option value="vacation">Ferie</option>
+                            <option value="sick_leave">Malattia</option>
+                            <option value="personal">Permesso</option>
+                            <option value="early_exit">Uscita Anticipata</option>
+                            <option value="late_entry">Entrata Posticipata</option>
+                        </select>
+
+                        <select id="statusFilter" class="form-control" onchange="filterRequests()">
+                            <option value="">Tutti gli stati</option>
+                            <option value="pending">In attesa</option>
+                            <option value="approved">Approvate</option>
+                            <option value="rejected">Rifiutate</option>
+                        </select>
+
+                        <input type="text" id="searchInput" placeholder="Cerca per dipendente..." class="form-control" onkeyup="filterRequests()">
+
+                        <button class="btn btn-outline" onclick="resetFilters()">
+                            <i data-lucide="refresh-cw"></i>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Requests Table -->
+                <div class="card card-text-dark">
+                    <div class="card-header">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()" class="form-control">
+                            <h3 class="card-title">Richieste</h3>
+                        </div>
+                        <div class="text-sm text-neutral-600">
+                            Totale: <span id="totalCount">0</span> |
+                            Pendenti: <span id="pendingCount">0</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th width="40">
+                                        <input type="checkbox" class="form-control" disabled>
+                                    </th>
+                                    <th>Dipendente</th>
+                                    <th>Tipo</th>
+                                    <th>Data</th>
+                                    <th>Motivo</th>
+                                    <th>Stato</th>
+                                    <th>Inviata</th>
+                                    <th width="120">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestsTable">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="paginationContainer">
+                        <!-- Pagination populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Request Detail Modal -->
+    <div id="requestDetailModal" class="modal-backdrop">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Dettagli Richiesta</h3>
+                <button class="modal-close" onclick="window.UI.hideModal('requestDetailModal')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="requestDetailContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="window.UI.hideModal('requestDetailModal')">Chiudi</button>
+                <div id="requestActions">
+                    <!-- Action buttons populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+
+    <script>
+        // Check authentication without causing redirect loops
+        const currentUser = window.Auth.getCurrentUser();
+        if (!currentUser || currentUser.role !== 'admin') {
+            console.log('Access denied: Admin role required for approvals page');
+            localStorage.removeItem('came_session');
+            window.location.replace('index.html');
+        }
+
+        let allRequests = [];
+        let filteredRequests = [];
+        let selectedRequests = new Set();
+        const itemsPerPage = 15;
+        let currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            window.UI.initializeSidebar();
+            loadAllRequests();
+        });
+
+        async function loadAllRequests() {
+            // Mostra skeleton loading
+            window.UI.showTableSkeleton('#requestsTable', 5, 7);
+
+            allRequests = await window.Storage.getAllRequests();
+            filteredRequests = [...allRequests];
+            updateCounts();
+            displayRequests();
+        }
+
+        function updateCounts() {
+            const total = filteredRequests.length;
+            const pending = filteredRequests.filter(r => r.status === 'pending').length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('pendingCount').textContent = pending;
+        }
+
+        function displayRequests() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageRequests = filteredRequests.slice(startIndex, endIndex);
+
+            const tbody = document.getElementById('requestsTable');
+
+            if (pageRequests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-neutral-600 py-8">Nessuna richiesta trovata</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageRequests.map(request => `
+                <tr class="hover:bg-neutral-50">
+                    <td>
+                        <input type="checkbox" class="form-control request-checkbox"
+                               value="${request.id}" onchange="updateSelectedRequests()">
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="avatar avatar-sm">
+                                <span>${request.user.avatar}</span>
+                            </div>
+                            <div>
+                                <div class="font-medium">${request.user.firstName} ${request.user.lastName}</div>
+                                <div class="text-xs text-neutral-500">${request.user.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="${getRequestIcon(request.type)}" class="text-neutral-600" style="width: 16px; height: 16px;"></i>
+                            <span>${window.Data.formatRequestType(request.type)}</span>
+                        </div>
+                    </td>
+                    <td>
+                        ${window.UI.formatDate(request.startDate)}
+                        ${request.endDate ? '<br><small class="text-neutral-500">fino al ' + window.UI.formatDate(request.endDate) + '</small>' : ''}
+                        ${request.time ? '<br><small class="text-neutral-500">ore ' + request.time + '</small>' : ''}
+                    </td>
+                    <td class="max-w-xs">
+                        <div class="truncate" title="${request.reason}">${request.reason}</div>
+                    </td>
+                    <td>
+                        <span class="badge ${window.Data.getStatusBadgeClass(request.status)}">
+                            ${window.Data.formatRequestStatus(request.status)}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="text-sm">${window.UI.formatDate(request.submittedAt, 'dd/mm/yyyy')}</div>
+                        <div class="text-xs text-neutral-500">${window.UI.formatDate(request.submittedAt, 'hh:MM')}</div>
+                    </td>
+                    <td>
+                        <div class="flex gap-1">
+                            <button class="btn btn-sm btn-outline" onclick="viewRequestDetail(${request.id})" title="Visualizza">
+                                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                            </button>
+                            ${request.status === 'pending' ? `
+                                <button class="btn btn-sm btn-success" onclick="processRequest(${request.id}, 'approved')" title="Approva">
+                                    <i data-lucide="check" style="width: 14px; height: 14px;"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="processRequest(${request.id}, 'rejected')" title="Rifiuta">
+                                    <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            generatePagination();
+            lucide.createIcons();
+        }
+
+        function generatePagination() {
+            const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+            const container = document.getElementById('paginationContainer');
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let pagination = '';
+
+            // Previous button
+            pagination += `
+                <button class="pagination-item ${currentPage === 1 ? 'disabled' : ''}"
+                        onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i data-lucide="chevron-left"></i>
+                </button>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    pagination += `
+                        <button class="pagination-item ${i === currentPage ? 'active' : ''}"
+                                onclick="changePage(${i})">${i}</button>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    pagination += '<span class="pagination-item disabled">...</span>';
+                }
+            }
+
+            // Next button
+            pagination += `
+                <button class="pagination-item ${currentPage === totalPages ? 'disabled' : ''}"
+                        onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            `;
+
+            container.innerHTML = pagination;
+            lucide.createIcons();
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+
+            currentPage = page;
+            displayRequests();
+        }
+
+        function filterRequests() {
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredRequests = allRequests.filter(request => {
+                const matchesType = !typeFilter || request.type === typeFilter;
+                const matchesStatus = !statusFilter || request.status === statusFilter;
+                const matchesSearch = !searchTerm ||
+                    request.user.firstName.toLowerCase().includes(searchTerm) ||
+                    request.user.lastName.toLowerCase().includes(searchTerm) ||
+                    request.reason.toLowerCase().includes(searchTerm);
+
+                return matchesType && matchesStatus && matchesSearch;
+            });
+
+            currentPage = 1;
+            selectedRequests.clear();
+            updateCounts();
+            displayRequests();
+            updateSelectedButtons();
+        }
+
+        function resetFilters() {
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            filterRequests();
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.request-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                if (selectAllCheckbox.checked) {
+                    selectedRequests.add(parseInt(checkbox.value));
+                } else {
+                    selectedRequests.delete(parseInt(checkbox.value));
+                }
+            });
+
+            updateSelectedButtons();
+        }
+
+        function updateSelectedRequests() {
+            selectedRequests.clear();
+
+            document.querySelectorAll('.request-checkbox:checked').forEach(checkbox => {
+                selectedRequests.add(parseInt(checkbox.value));
+            });
+
+            updateSelectedButtons();
+        }
+
+        function updateSelectedButtons() {
+            const hasSelected = selectedRequests.size > 0;
+            document.getElementById('approveSelectedBtn').disabled = !hasSelected;
+        }
+
+        function approveSelected() {
+            if (selectedRequests.size === 0) return;
+
+            window.UI.confirm(
+                `Vuoi approvare ${selectedRequests.size} richiesta${selectedRequests.size > 1 ? 'e' : ''}?`,
+                'Approva Richieste Selezionate'
+            ).then(async confirmed => {
+                if (confirmed) {
+                    let processed = 0;
+                    for (const requestId of selectedRequests) {
+                        if (await processRequestById(requestId, 'approved')) {
+                            processed++;
+                        }
+                    }
+
+                    window.UI.showToast(`${processed} richieste approvate`, 'success');
+                    selectedRequests.clear();
+                    loadAllRequests();
+                    updateSelectedButtons();
+                }
+            });
+        }
+
+        function processRequest(requestId, newStatus) {
+            const statusText = newStatus === 'approved' ? 'approvare' : 'rifiutare';
+
+            window.UI.confirm(`Sei sicuro di voler ${statusText} questa richiesta?`).then(async confirmed => {
+                if (confirmed) {
+                    if (await processRequestById(requestId, newStatus)) {
+                        const message = newStatus === 'approved' ? 'Richiesta approvata' : 'Richiesta rifiutata';
+                        window.UI.showToast(message, 'success');
+                        loadAllRequests();
+                    }
+                }
+            });
+        }
+
+        async function processRequestById(requestId, newStatus) {
+            try {
+                console.log(`🔄 Processando richiesta ${requestId} con stato ${newStatus}`);
+
+                // Trova la richiesta nella collezione centralizzata
+                const request = allRequests.find(r => r.id == requestId);
+
+                if (!request) {
+                    console.error('❌ Richiesta non trovata:', requestId);
+                    window.UI.showToast('Richiesta non trovata', 'error');
+                    return false;
+                }
+
+                if (request.status !== 'pending') {
+                    console.warn('⚠️ La richiesta non è in stato pending:', request.status);
+                    window.UI.showToast('La richiesta è già stata processata', 'warning');
+                    return false;
+                }
+
+                const userId = request.userId || request.user?.id;
+
+                if (!userId) {
+                    console.error('❌ User ID non trovato per la richiesta');
+                    window.UI.showToast('Errore: utente non identificato', 'error');
+                    return false;
+                }
+
+                // Aggiorna la richiesta con le informazioni di processo
+                const updateData = {
+                    status: newStatus,
+                    processedAt: new Date().toISOString(),
+                    processedBy: window.Auth.getUserFullName()
+                };
+
+                // Aggiorna nella collezione dell'utente
+                await window.Storage.updateRequest(userId, requestId, updateData);
+
+                console.log(`✅ Richiesta ${requestId} aggiornata con successo a ${newStatus}`);
+                return true;
+
+            } catch (error) {
+                console.error('❌ Errore processamento richiesta:', error);
+                window.UI.showToast('Errore durante il processamento', 'error');
+                return false;
+            }
+        }
+
+        function viewRequestDetail(requestId) {
+            const request = allRequests.find(r => r.id == requestId);
+            if (!request) {
+                console.error('Richiesta non trovata:', requestId);
+                window.UI.showToast('Richiesta non trovata', 'error');
+                return;
+            }
+
+            console.log('📋 Dettagli richiesta:', request);
+
+            // Gestisci sia il formato con user object che userName string
+            const userName = request.user ? `${request.user.firstName} ${request.user.lastName}` : (request.userName || 'Utente Sconosciuto');
+            const userEmail = request.user ? request.user.email : (request.userEmail || '');
+            const userAvatar = request.user ? request.user.avatar : (request.userName ? request.userName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U?');
+
+            const content = `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold" style="color: #1f2937;">Dipendente</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="avatar avatar-sm">
+                                    <span>${userAvatar}</span>
+                                </div>
+                                <div>
+                                    <div class="font-semibold" style="color: #111827; font-size: 15px;">${userName}</div>
+                                    <div class="text-sm" style="color: #6b7280;">${userEmail}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold" style="color: #1f2937;">Tipo Richiesta</label>
+                            <div class="mt-1 flex items-center gap-2">
+                                <i data-lucide="${getRequestIcon(request.type)}" style="width: 16px; height: 16px; color: #0066FF;"></i>
+                                <span style="color: #111827; font-weight: 600;">${window.Data.formatRequestType(request.type)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold" style="color: #1f2937;">Data Inizio</label>
+                            <div class="mt-1" style="color: #111827; font-weight: 500; font-size: 15px;">${window.UI.formatDate(request.startDate)}</div>
+                        </div>
+                        ${request.endDate ? `
+                            <div>
+                                <label class="text-sm font-semibold" style="color: #1f2937;">Data Fine</label>
+                                <div class="mt-1" style="color: #111827; font-weight: 500; font-size: 15px;">${window.UI.formatDate(request.endDate)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${request.time ? `
+                        <div>
+                            <label class="text-sm font-semibold" style="color: #1f2937;">Ora</label>
+                            <div class="mt-1" style="color: #111827; font-weight: 500; font-size: 15px;">${request.time}</div>
+                        </div>
+                    ` : ''}
+
+                    <div>
+                        <label class="text-sm font-semibold" style="color: #1f2937;">Motivo</label>
+                        <div class="mt-1 p-3 rounded" style="background: #f3f4f6; color: #111827; font-weight: 500; line-height: 1.6;">${request.reason}</div>
+                    </div>
+
+                    ${request.notes ? `
+                        <div>
+                            <label class="text-sm font-semibold" style="color: #1f2937;">Note</label>
+                            <div class="mt-1 p-3 rounded" style="background: #fef3c7; color: #92400e; font-weight: 500; line-height: 1.6;">${request.notes}</div>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold" style="color: #1f2937;">Stato</label>
+                            <div class="mt-1">
+                                <span class="badge ${window.Data.getStatusBadgeClass(request.status)}" style="font-size: 13px; padding: 6px 12px;">
+                                    ${window.Data.formatRequestStatus(request.status)}
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold" style="color: #1f2937;">Inviata</label>
+                            <div class="mt-1" style="color: #111827; font-weight: 500;">${window.UI.formatDate(request.submittedAt, 'dd/mm/yyyy hh:MM')}</div>
+                        </div>
+                    </div>
+
+                    ${request.processedAt ? `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-semibold" style="color: #1f2937;">Processata da</label>
+                                <div class="mt-1" style="color: #111827; font-weight: 500;">${request.processedBy}</div>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold" style="color: #1f2937;">Processata il</label>
+                                <div class="mt-1" style="color: #111827; font-weight: 500;">${window.UI.formatDate(request.processedAt, 'dd/mm/yyyy hh:MM')}</div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('requestDetailContent').innerHTML = content;
+
+            // Setup action buttons
+            const actionsContainer = document.getElementById('requestActions');
+            if (request.status === 'pending') {
+                actionsContainer.innerHTML = `
+                    <button class="btn btn-success" onclick="processRequest(${request.id}, 'approved'); window.UI.hideModal('requestDetailModal')">
+                        <i data-lucide="check"></i>
+                        Approva
+                    </button>
+                    <button class="btn btn-danger" onclick="processRequest(${request.id}, 'rejected'); window.UI.hideModal('requestDetailModal')">
+                        <i data-lucide="x"></i>
+                        Rifiuta
+                    </button>
+                `;
+            } else {
+                actionsContainer.innerHTML = '';
+            }
+
+            window.UI.showModal('requestDetailModal');
+            lucide.createIcons();
+        }
+
+        function getRequestIcon(type) {
+            const icons = {
+                vacation: 'sun',
+                sick_leave: 'heart-pulse',
+                personal: 'user',
+                early_exit: 'clock-4',
+                late_entry: 'clock-9'
+            };
+            return icons[type] || 'calendar';
+        }
+
+        function exportToExcel() {
+            // Funzione helper per formattare la data
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+
+            // Prepara i dati per Excel
+            const headers = ['Dipendente', 'Tipo', 'Data Inizio', 'Data Fine', 'Motivo', 'Stato', 'Inviata', 'Processata'];
+
+            const data = filteredRequests.map(req => [
+                req.employeeName || '-',
+                window.Data.formatRequestType(req.type),
+                formatDate(req.startDate),
+                req.endDate ? formatDate(req.endDate) : '-',
+                req.reason || '',
+                window.Data.formatRequestStatus(req.status),
+                formatDate(req.submittedAt),
+                req.processedAt ? formatDate(req.processedAt) : '-'
+            ]);
+
+            // Crea il workbook
+            const wb = XLSX.utils.book_new();
+            const ws_data = [headers, ...data];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Stile per l'intestazione
+            const headerStyle = {
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                fill: { fgColor: { rgb: "0066FF" } },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+
+            // Applica stile all'intestazione
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_col(C) + "1";
+                if (!ws[address]) continue;
+                ws[address].s = headerStyle;
+            }
+
+            // Imposta larghezza colonne
+            ws['!cols'] = [
+                { wch: 20 }, // Dipendente
+                { wch: 18 }, // Tipo
+                { wch: 12 }, // Data Inizio
+                { wch: 12 }, // Data Fine
+                { wch: 40 }, // Motivo
+                { wch: 12 }, // Stato
+                { wch: 12 }, // Inviata
+                { wch: 12 }  // Processata
+            ];
+
+            // Aggiungi bordi e allineamento alle celle dati
+            for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const address = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[address]) continue;
+                    ws[address].s = {
+                        border: {
+                            top: { style: "thin", color: { rgb: "D1D5DB" } },
+                            bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+                            left: { style: "thin", color: { rgb: "D1D5DB" } },
+                            right: { style: "thin", color: { rgb: "D1D5DB" } }
+                        },
+                        alignment: { vertical: "center", wrapText: true }
+                    };
+                }
+            }
+
+            // Aggiungi il foglio al workbook
+            XLSX.utils.book_append_sheet(wb, ws, "Richieste");
+
+            // Esporta
+            XLSX.writeFile(wb, `richieste-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+            window.UI.showToast('Richieste esportate', 'success');
+        }
+    </script>
+</body>
+</html>

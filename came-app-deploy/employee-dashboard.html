@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Dipendente - CAME</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/effects.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00D9B1;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="24" cy="24" r="22" fill="url(#logoGradient)"/>
+                        <path d="M18 16C21.866 16 25 19.134 25 23C25 26.866 21.866 30 18 30"
+                              stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M29 30L33 16L37 30"
+                              stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M31 26H35"
+                              stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="logo-text">CAME</div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Principale</div>
+                    <a href="employee-dashboard.html" class="nav-item active">
+                        <i data-lucide="home" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Dashboard</span>
+                    </a>
+                    <a href="timesheet.html" class="nav-item">
+                        <i data-lucide="clock" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Ore di Lavoro</span>
+                    </a>
+                    <a href="time-registration.html" class="nav-item">
+                        <i data-lucide="plus-circle" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Registrazione Ore</span>
+                    </a>
+                    <a href="requests.html" class="nav-item">
+                        <i data-lucide="calendar-check" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Richieste</span>
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="nav-item w-full" onclick="window.Auth.logout()" style="border: none; background: none; text-align: left;">
+                    <i data-lucide="log-out" class="nav-item-icon"></i>
+                    <span class="sidebar-label">Esci</span>
+                </button>
+            </div>
+
+            <button class="sidebar-toggle" aria-label="Chiudi menu laterale">
+                <i data-lucide="chevron-left"></i>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" data-sidebar-toggle aria-label="Apri menu laterale">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div>
+                        <h1 class="header-title">Dashboard</h1>
+                        <div class="breadcrumb">
+                            <span class="breadcrumb-item">Home</span>
+                            <i data-lucide="chevron-right" class="breadcrumb-separator"></i>
+                            <span class="breadcrumb-item">Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="btn btn-outline btn-sm" onclick="window.Auth.logout()" title="Esci dall'applicazione">
+                        <i data-lucide="log-out"></i>
+                        <span>Logout</span>
+                    </button>
+
+                    <button class="header-notifications">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+
+                    <div class="header-user" data-dropdown-toggle="userMenu">
+                        <div class="avatar" id="userAvatar">
+                            <span id="userInitials">--</span>
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name" id="userName">Nome Utente</div>
+                            <div class="user-role" id="userRole">Dipendente</div>
+                        </div>
+                        <i data-lucide="chevron-down"></i>
+
+                        <div id="userMenu" class="dropdown">
+                            <div class="dropdown-menu">
+                                <div class="dropdown-item">
+                                    <i data-lucide="user"></i>
+                                    <span>Profilo</span>
+                                </div>
+                                <div class="dropdown-item">
+                                    <i data-lucide="settings"></i>
+                                    <span>Impostazioni</span>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-item" onclick="window.Auth.logout()">
+                                    <i data-lucide="log-out"></i>
+                                    <span>Esci</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Hero Cards -->
+                <div class="grid grid-cols-4 gap-6 stagger-children">
+                    <!-- Ore Lavorate -->
+                    <div class="card hover-glow-primary card-stack card-text-dark">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-neutral-900">Ore Questo Mese</h3>
+                                <p class="text-sm text-neutral-600">Ore lavorate nel mese corrente</p>
+                            </div>
+                            <div class="bg-primary-100 p-3 rounded-xl">
+                                <i data-lucide="clock" class="text-primary-600"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <div>
+                                <div class="text-3xl font-bold text-neutral-900" id="currentMonthHours">0h</div>
+                                <div class="text-sm text-success-600 mt-1">
+                                    <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
+                                    <span>+12% dal mese scorso</span>
+                                </div>
+                            </div>
+                            <canvas id="hoursChart" width="60" height="40" style="max-width: 60px; max-height: 40px;"></canvas>
+                        </div>
+                        <div class="mt-4">
+                            <a href="timesheet.html" class="text-primary-600 text-sm font-medium hover:text-primary-700">
+                                Vedi dettaglio →
+                            </a>
+                        </div>
+                    </div>
+
+
+                    <!-- Richieste Pendenti -->
+                    <div class="card hover-lift card-text-dark">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-neutral-900">Richieste Pendenti</h3>
+                                <p class="text-sm text-neutral-600">In attesa di approvazione</p>
+                            </div>
+                            <div class="bg-warning-100 p-3 rounded-xl">
+                                <i data-lucide="clock-4" class="text-warning-600"></i>
+                            </div>
+                        </div>
+                        <div class="text-3xl font-bold text-neutral-900 mb-2" id="pendingRequestsCount">0</div>
+                        <div id="pendingRequestsList" class="space-y-2">
+                            <!-- Dynamic content -->
+                        </div>
+                        <div class="mt-4">
+                            <a href="requests.html" class="text-primary-600 text-sm font-medium hover:text-primary-700">
+                                Gestisci richieste →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card hover-lift card-text-dark">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-neutral-900">Azioni Rapide</h3>
+                            <p class="text-sm text-neutral-600">Operazioni frequenti</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="btn btn-outline btn-sm flex-col" onclick="window.location.href='timesheet.html'">
+                                <i data-lucide="plus-circle" style="margin-bottom: 4px;"></i>
+                                <span>Inserisci Ore</span>
+                            </button>
+                            <button class="btn btn-outline btn-sm flex-col" onclick="window.location.href='requests.html'">
+                                <i data-lucide="calendar-plus" style="margin-bottom: 4px;"></i>
+                                <span>Richiedi Permesso</span>
+                            </button>
+                            <button class="btn btn-outline btn-sm flex-col" onclick="requestSickLeave()">
+                                <i data-lucide="heart-pulse" style="margin-bottom: 4px;"></i>
+                                <span>Malattia</span>
+                            </button>
+                            <button class="btn btn-outline btn-sm flex-col" onclick="generateReport()">
+                                <i data-lucide="file-text" style="margin-bottom: 4px;"></i>
+                                <span>Report</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Richieste -->
+                <div class="grid grid-cols-3 gap-6 mt-8">
+                    <div class="col-span-2">
+                        <div class="card card-text-dark">
+                            <div class="card-header">
+                                <h3 class="card-title">Ultime Richieste</h3>
+                                <p class="card-subtitle">Cronologia delle tue richieste recenti</p>
+                            </div>
+                            <div class="card-body">
+                                <div id="requestsTimeline" class="space-y-4">
+                                    <!-- Dynamic content -->
+                                </div>
+                                <div class="mt-6 text-center">
+                                    <a href="requests.html" class="btn btn-outline">Vedi tutte le richieste</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mini Calendar -->
+                    <div class="card card-text-dark">
+                        <div class="card-header">
+                            <h3 class="card-title">Calendario</h3>
+                            <p class="card-subtitle" id="currentMonthYear">Novembre 2024</p>
+                        </div>
+                        <div class="card-body">
+                            <div id="miniCalendar" class="mini-calendar">
+                                <!-- Calendar will be generated here -->
+                            </div>
+                            <div class="mt-4 text-sm">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-3 h-3 bg-primary-500 rounded-full"></div>
+                                    <span>Richieste approvate</span>
+                                </div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-3 h-3 bg-warning-500 rounded-full"></div>
+                                    <span>Richieste pendenti</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 bg-error-500 rounded-full"></div>
+                                    <span>Richieste rifiutate</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+
+    <script>
+        // Check authentication without causing redirect loops
+        const currentUser = window.Auth.getCurrentUser();
+        if (!currentUser || currentUser.role !== 'employee') {
+            console.log('Access denied: Employee role required');
+            localStorage.removeItem('came_session');
+            window.location.replace('index.html');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePage();
+            loadDashboardData();
+            window.UI.initializeSidebar();
+            lucide.createIcons();
+        });
+
+        function initializePage() {
+            // Set user info in header
+            document.getElementById('userName').textContent = window.Auth.getUserFullName();
+            document.getElementById('userRole').textContent = window.Auth.formatRole(currentUser.role);
+            document.getElementById('userInitials').textContent = window.Auth.getUserInitials();
+        }
+
+        async function loadDashboardData() {
+            const stats = await window.Data.getDashboardStats(currentUser.id);
+            if (!stats) return;
+
+            // Update current month hours
+            document.getElementById('currentMonthHours').textContent = stats.currentMonthHours + 'h';
+
+
+            // Update pending requests
+            document.getElementById('pendingRequestsCount').textContent = stats.pendingRequests;
+
+            // Load pending requests list
+            loadPendingRequestsList(stats.recentRequests.filter(r => r.status === 'pending').slice(0, 2));
+
+            // Load requests timeline
+            loadRequestsTimeline(stats.recentRequests);
+
+            // Generate mini calendar
+            generateMiniCalendar(stats.recentRequests);
+
+            // Create hours chart
+            createHoursChart();
+        }
+
+        function loadPendingRequestsList(pendingRequests) {
+            const container = document.getElementById('pendingRequestsList');
+
+            if (pendingRequests.length === 0) {
+                container.innerHTML = '<p class="text-sm text-neutral-600">Nessuna richiesta pendente</p>';
+                return;
+            }
+
+            container.innerHTML = pendingRequests.map(request => `
+                <div class="flex items-center justify-between py-2 border-b border-neutral-100">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="${getRequestIcon(request.type)}" style="width: 14px; height: 14px;" class="text-neutral-500"></i>
+                        <span class="text-sm font-medium">${window.Data.formatRequestType(request.type)}</span>
+                    </div>
+                    <span class="text-xs text-neutral-500">${window.UI.formatDate(request.startDate)}</span>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function loadRequestsTimeline(requests) {
+            const container = document.getElementById('requestsTimeline');
+
+            if (requests.length === 0) {
+                container.innerHTML = '<p class="text-neutral-600">Nessuna richiesta recente</p>';
+                return;
+            }
+
+            container.innerHTML = requests.slice(0, 5).map(request => `
+                <div class="flex items-start gap-4 p-4 bg-neutral-50 rounded-lg hover-lift transition-fast">
+                    <div class="flex-shrink-0 w-10 h-10 bg-${getStatusColor(request.status)}-100 rounded-full flex items-center justify-center">
+                        <i data-lucide="${getRequestIcon(request.type)}" class="text-${getStatusColor(request.status)}-600" style="width: 16px; height: 16px;"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-1">
+                            <h4 class="font-medium text-neutral-900">${window.Data.formatRequestType(request.type)}</h4>
+                            <span class="badge badge-${window.Data.getStatusBadgeClass(request.status).replace('badge-', '')}">${window.Data.formatRequestStatus(request.status)}</span>
+                        </div>
+                        <p class="text-sm text-neutral-600 mb-2">${request.reason}</p>
+                        <div class="flex items-center gap-4 text-xs text-neutral-500">
+                            <span><i data-lucide="calendar" style="width: 12px; height: 12px;"></i> ${window.UI.formatDate(request.startDate)}</span>
+                            <span><i data-lucide="clock" style="width: 12px; height: 12px;"></i> ${window.UI.formatDate(request.submittedAt, 'dd/mm/yyyy hh:MM')}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function generateMiniCalendar(requests) {
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+
+            document.getElementById('currentMonthYear').textContent = new Intl.DateTimeFormat('it-IT', {
+                month: 'long',
+                year: 'numeric'
+            }).format(today);
+
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
+
+            let calendarHTML = `
+                <div class="calendar-header">
+                    <div class="calendar-day-header">L</div>
+                    <div class="calendar-day-header">M</div>
+                    <div class="calendar-day-header">M</div>
+                    <div class="calendar-day-header">G</div>
+                    <div class="calendar-day-header">V</div>
+                    <div class="calendar-day-header">S</div>
+                    <div class="calendar-day-header">D</div>
+                </div>
+                <div class="calendar-grid">
+            `;
+
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+
+                const isCurrentMonth = date.getMonth() === currentMonth;
+                const isToday = date.toDateString() === today.toDateString();
+                const dateString = date.toISOString().split('T')[0];
+
+                const dayRequests = requests.filter(r => r.startDate === dateString || r.endDate === dateString);
+                let requestClass = '';
+                if (dayRequests.length > 0) {
+                    const status = dayRequests[0].status;
+                    requestClass = status === 'approved' ? 'approved' : status === 'pending' ? 'pending' : 'rejected';
+                }
+
+                calendarHTML += `
+                    <div class="calendar-day ${isCurrentMonth ? '' : 'other-month'} ${isToday ? 'today' : ''} ${requestClass}">
+                        ${date.getDate()}
+                    </div>
+                `;
+            }
+
+            calendarHTML += '</div>';
+
+            document.getElementById('miniCalendar').innerHTML = calendarHTML;
+        }
+
+        function createHoursChart() {
+            const ctx = document.getElementById('hoursChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'],
+                    datasets: [{
+                        data: [8, 7.5, 8, 8.5, 7, 4, 0],
+                        borderColor: '#0066FF',
+                        backgroundColor: 'rgba(0, 102, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Helper functions
+        function getRequestIcon(type) {
+            const icons = {
+                vacation: 'sun',
+                sick_leave: 'heart-pulse',
+                personal: 'user',
+                early_exit: 'clock-4',
+                late_entry: 'clock-9'
+            };
+            return icons[type] || 'calendar';
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                approved: 'success',
+                pending: 'warning',
+                rejected: 'error'
+            };
+            return colors[status] || 'neutral';
+        }
+
+        // Quick action functions
+        function requestSickLeave() {
+            const today = new Date().toISOString().split('T')[0];
+            window.location.href = `requests.html?type=sick_leave&date=${today}`;
+        }
+
+        async function generateReport() {
+            window.UI.showToast('Generazione report in corso...', 'info');
+            setTimeout(async () => {
+                const reportData = await window.Data.exportTimesheet(currentUser.id, 'json');
+                const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `report-${currentUser.firstName.toLowerCase()}-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                URL.revokeObjectURL(url);
+                window.UI.showToast('Report generato con successo', 'success');
+            }, 1500);
+        }
+    </script>
+
+    <!-- Custom styles for calendar -->
+    <style>
+        .mini-calendar {
+            font-size: 0.8rem;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            color: var(--neutral-600);
+            padding: 4px;
+            font-size: 0.75rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .calendar-day:hover {
+            background: var(--neutral-100);
+        }
+
+        .calendar-day.other-month {
+            color: var(--neutral-400);
+        }
+
+        .calendar-day.today {
+            background: var(--primary-500);
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.approved::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--success-500);
+            border-radius: 50%;
+        }
+
+        .calendar-day.pending::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--warning-500);
+            border-radius: 50%;
+        }
+
+        .calendar-day.rejected::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--error-500);
+            border-radius: 50%;
+        }
+    </style>
+</body>
+</html>

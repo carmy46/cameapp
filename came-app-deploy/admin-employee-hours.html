@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ore Dipendenti - CAME Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- XLSX Library for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/effects.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Admin Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00D9B1;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="24" cy="24" r="22" fill="url(#logoGradient)"/>
+                        <path d="M18 16C21.866 16 25 19.134 25 23C25 26.866 21.866 30 18 30" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M29 30L33 16L37 30" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M31 26H35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="logo-text">CAME</div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a href="admin-dashboard.html" class="nav-item">
+                        <i data-lucide="bar-chart-3" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Panoramica</span>
+                    </a>
+                    <a href="admin-approvals.html" class="nav-item">
+                        <i data-lucide="check-circle" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Approvazioni</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestione</div>
+                    <a href="#" class="nav-item">
+                        <i data-lucide="users" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Dipendenti</span>
+                    </a>
+                    <a href="admin-employee-hours.html" class="nav-item active">
+                        <i data-lucide="clock-3" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Ore Dipendenti</span>
+                    </a>
+                    <a href="admin-reports.html" class="nav-item">
+                        <i data-lucide="file-text" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Report</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="nav-item w-full" onclick="safeLogout()" style="border: none; background: none; text-align: left;">
+                    <i data-lucide="log-out" class="nav-item-icon"></i>
+                    <span class="sidebar-label">Esci</span>
+                </button>
+            </div>
+
+            <button class="sidebar-toggle" aria-label="Chiudi menu laterale">
+                <i data-lucide="chevron-left"></i>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" data-sidebar-toggle aria-label="Apri menu laterale">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h1 class="header-title">Gestione Ore Dipendenti</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-outline btn-sm" onclick="exportToExcel()">
+                        <i data-lucide="download"></i>
+                        Esporta Excel
+                    </button>
+                    <button class="btn btn-outline btn-sm" onclick="safeLogout()" title="Esci dall'applicazione">
+                        <i data-lucide="log-out"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="card-compact text-center hover-lift">
+                        <div class="flex items-center justify-center gap-3">
+                            <i data-lucide="users" class="text-xl card-icon-color"></i>
+                            <div>
+                                <div class="text-lg font-bold card-number-color" id="activeEmployees">0</div>
+                                <div class="text-xs card-label-color">Dipendenti</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-compact text-center hover-lift">
+                        <div class="flex items-center justify-center gap-3">
+                            <i data-lucide="clock" class="text-xl card-icon-color"></i>
+                            <div>
+                                <div class="text-lg font-bold card-number-color" id="totalHoursMonth">0h</div>
+                                <div class="text-xs card-label-color">Ore Mese</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-compact text-center hover-lift">
+                        <div class="flex items-center justify-center gap-3">
+                            <i data-lucide="calendar-days" class="text-xl card-icon-color"></i>
+                            <div>
+                                <div class="text-lg font-bold card-number-color" id="registrationsToday">0</div>
+                                <div class="text-xs card-label-color">Oggi</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-compact text-center hover-lift">
+                        <div class="flex items-center justify-center gap-3">
+                            <i data-lucide="trending-up" class="text-xl card-icon-color"></i>
+                            <div>
+                                <div class="text-lg font-bold card-number-color" id="avgHoursPerDay">0h</div>
+                                <div class="text-xs card-label-color">Media/Giorno</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card card-text-dark mb-6">
+                    <div class="card-header cursor-pointer" onclick="toggleFilters()">
+                        <div class="flex items-center justify-between w-full">
+                            <h3 class="card-title">Filtri di Ricerca</h3>
+                            <div class="flex items-center gap-2">
+                                <span id="activeFiltersCount" class="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full" style="display: none;">0 filtri attivi</span>
+                                <i id="filtersChevron" data-lucide="chevron-down" class="w-5 h-5 text-neutral-500 transition-transform duration-200"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="filtersBody" class="card-body" style="display: none;">
+                        <div class="flex flex-wrap gap-4 items-end">
+                            <div class="form-group flex-1 min-w-40">
+                                <label for="filterEmployee" class="form-label">Dipendente</label>
+                                <select id="filterEmployee" class="form-input" onchange="applyFilters()">
+                                    <option value="">Tutti i dipendenti</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1 min-w-36">
+                                <label for="filterDateFrom" class="form-label">Data da</label>
+                                <input type="date" id="filterDateFrom" class="form-input" onchange="applyFilters()">
+                            </div>
+                            <div class="form-group flex-1 min-w-36">
+                                <label for="filterDateTo" class="form-label">Data a</label>
+                                <input type="date" id="filterDateTo" class="form-input" onchange="applyFilters()">
+                            </div>
+                            <div class="form-group flex-1 min-w-40">
+                                <label for="filterLocation" class="form-label">Luogo</label>
+                                <select id="filterLocation" class="form-input" onchange="applyFilters()">
+                                    <option value="">Tutti i luoghi</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1 min-w-36">
+                                <label for="filterActivity" class="form-label">Attività</label>
+                                <select id="filterActivity" class="form-input" onchange="applyFilters()">
+                                    <option value="">Tutte le attività</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex gap-2">
+                                <button class="btn btn-outline" onclick="clearFilters()">
+                                    <i data-lucide="x"></i>
+                                    Pulisci
+                                </button>
+                                <button class="btn btn-primary" onclick="applyFilters()">
+                                    <i data-lucide="search"></i>
+                                    Applica
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hours Table -->
+                <div class="card card-text-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">Registrazioni Ore</h3>
+                        <div class="flex items-center gap-3">
+                            <span id="recordsCount" class="text-sm text-neutral-600">0 record trovati</span>
+                            <div id="paginationControls" class="flex items-center gap-2" style="display: none;">
+                                <button class="btn btn-sm btn-outline" onclick="previousPage()" id="prevPageBtn">
+                                    <i data-lucide="chevron-left"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline" onclick="nextPage()" id="nextPageBtn">
+                                    <i data-lucide="chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                    </th>
+                                    <th>Dipendente</th>
+                                    <th>Data</th>
+                                    <th>Luogo</th>
+                                    <th>Attività</th>
+                                    <th>Orario</th>
+                                    <th>Pausa</th>
+                                    <th>Ore Totali</th>
+                                    <th>Note</th>
+                                    <th>Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hoursTable">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div class="card-footer" id="bulkActions" style="display: none;">
+                        <div class="flex items-center justify-between">
+                            <span id="selectedCount" class="text-sm text-neutral-600">0 record selezionati</span>
+                            <div class="flex gap-2">
+                                <button class="btn btn-sm btn-danger" onclick="bulkDelete()">
+                                    <i data-lucide="trash-2"></i>
+                                    Elimina Selezionati
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Modifica Registrazione</h3>
+                <button class="modal-close" onclick="closeEditModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editRecordId">
+                    <input type="hidden" id="editEmployeeId">
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="form-group">
+                            <label for="editDate" class="form-label">Data</label>
+                            <input type="date" id="editDate" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editLocation" class="form-label">Luogo</label>
+                            <input type="text" id="editLocation" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="form-group">
+                            <label for="editStartTime" class="form-label">Ora Inizio</label>
+                            <input type="time" id="editStartTime" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEndTime" class="form-label">Ora Fine</label>
+                            <input type="time" id="editEndTime" class="form-input" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="form-group">
+                            <label for="editBreakStart" class="form-label">Inizio Pausa</label>
+                            <input type="time" id="editBreakStart" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="editBreakEnd" class="form-label">Fine Pausa</label>
+                            <input type="time" id="editBreakEnd" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="editActivity" class="form-label">Attività</label>
+                        <select id="editActivity" class="form-input" required>
+                            <option value="Pulizia">Pulizia</option>
+                            <option value="Pulizia fino">Pulizia fino</option>
+                            <option value="Lavaggio moquette">Lavaggio moquette</option>
+                            <option value="Lavaggio vetri">Lavaggio vetri</option>
+                            <option value="Sgombero">Sgombero</option>
+                            <option value="Trasloco">Trasloco</option>
+                            <option value="Pittura">Pittura</option>
+                            <option value="Giardinaggio">Giardinaggio</option>
+                            <option value="Muratura">Muratura</option>
+                            <option value="Facchinaggio">Facchinaggio</option>
+                            <option value="Portineria">Portineria</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="editNotes" class="form-label">Note</label>
+                        <textarea id="editNotes" class="form-input" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeEditModal()">Annulla</button>
+                <button class="btn btn-primary" onclick="saveEdit()">Salva Modifiche</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+
+    <script>
+        let allRegistrations = [];
+        let filteredRegistrations = [];
+        let selectedRecords = new Set();
+        let currentPage = 1;
+        const itemsPerPage = 50;
+
+        // Check authentication
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔄 DOM loaded, checking modules...');
+
+            const checkModules = () => {
+                const modules = {
+                    Auth: typeof window.Auth !== 'undefined',
+                    UI: typeof window.UI !== 'undefined',
+                    Data: typeof window.Data !== 'undefined',
+                    Storage: typeof window.Storage !== 'undefined'
+                };
+
+                console.log('📦 Modules status:', modules);
+
+                if (!modules.Auth || !window.Auth.getCurrentUser) {
+                    console.error('❌ Auth module not loaded properly');
+                    alert('Errore di caricamento moduli. Redirecting to login...');
+                    window.location.replace('index.html');
+                    return false;
+                }
+
+                const currentUser = window.Auth.getCurrentUser();
+                console.log('👤 Current user:', currentUser);
+
+                if (!currentUser || currentUser.role !== 'admin') {
+                    console.log('⛔ Access denied: Admin role required');
+                    localStorage.removeItem('came_session');
+                    window.location.replace('index.html');
+                    return false;
+                }
+
+                console.log('✅ Admin access granted for:', currentUser.firstName, currentUser.lastName);
+                return true;
+            };
+
+            if (checkModules()) {
+                initializeEmployeeHours();
+            } else {
+                setTimeout(() => {
+                    if (checkModules()) {
+                        initializeEmployeeHours();
+                    }
+                }, 500);
+            }
+        });
+
+        function initializeEmployeeHours() {
+            lucide.createIcons();
+            window.UI.initializeSidebar();
+            loadAllRegistrations();
+            populateFilters();
+            updateSummaryCards();
+        }
+
+        function safeLogout() {
+            if (typeof window.Auth !== 'undefined' && window.Auth.logout) {
+                window.Auth.logout();
+            } else {
+                console.log('Auth not available, performing manual logout');
+                localStorage.removeItem('came_session');
+                localStorage.removeItem('came_timesheet_data');
+                localStorage.removeItem('came_requests_data');
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function loadAllRegistrations() {
+            console.log('🔄 Caricamento registrazioni ore da Firestore...');
+
+            // Mostra skeleton loading
+            window.UI.showTableSkeleton('#registrationsTable', 5, 10);
+
+            try {
+                // Carica tutte le registrazioni dalla collezione centralizzata
+                const timeRegs = await window.Storage.getAllTimeRegistrations();
+
+                console.log(`✅ Caricate ${timeRegs.length} registrazioni ore`);
+
+                // Mappa i dati per la tabella
+                allRegistrations = timeRegs.map(reg => ({
+                    ...reg,
+                    employeeId: reg.userId,
+                    employeeName: reg.userName || 'Utente Sconosciuto'
+                }));
+
+                // Sort by date descending
+                allRegistrations.sort((a, b) => new Date(b.date) - new Date(a.date));
+                filteredRegistrations = [...allRegistrations];
+
+                displayRegistrations();
+                updateSummaryCards();
+
+            } catch (error) {
+                console.error('❌ Errore caricamento registrazioni:', error);
+                window.UI.showToast('Impossibile caricare le registrazioni ore. Verifica la connessione e riprova.', 'error');
+
+                // Fallback: prova a caricare da localStorage
+                allRegistrations = [];
+                const allUsers = await window.Storage.getAllUsers();
+                const employees = allUsers.filter(user => user.role === 'employee');
+
+                employees.forEach(employee => {
+                    const registrationsKey = `came_time_registrations_${employee.id}`;
+                    const employeeRegistrations = JSON.parse(localStorage.getItem(registrationsKey)) || [];
+
+                    employeeRegistrations.forEach(reg => {
+                        allRegistrations.push({
+                            ...reg,
+                            employeeId: employee.id,
+                            employeeName: `${employee.firstName} ${employee.lastName}`
+                        });
+                    });
+                });
+
+                // Sort by date descending
+                allRegistrations.sort((a, b) => new Date(b.date) - new Date(a.date));
+                filteredRegistrations = [...allRegistrations];
+                displayRegistrations();
+            }
+        }
+
+        async function populateFilters() {
+            try {
+                // Carica utenti da Firestore
+                const allUsers = await window.Storage.getAllUsers();
+                const employees = allUsers.filter(user => user.role === 'employee');
+                const employeeSelect = document.getElementById('filterEmployee');
+
+                employees.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.id;
+                    option.textContent = `${emp.firstName} ${emp.lastName}`;
+                    employeeSelect.appendChild(option);
+                });
+
+                console.log(`✅ Popolati ${employees.length} dipendenti nei filtri`);
+            } catch (error) {
+                console.error('❌ Errore popolamento filtri dipendenti:', error);
+            }
+
+            // Populate unique locations and activities from registrations
+            const locations = [...new Set(allRegistrations.map(reg => reg.location).filter(Boolean))];
+            const activities = [...new Set(allRegistrations.map(reg => reg.activity).filter(Boolean))];
+
+            const locationSelect = document.getElementById('filterLocation');
+            locations.forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc;
+                option.textContent = loc;
+                locationSelect.appendChild(option);
+            });
+
+            const activitySelect = document.getElementById('filterActivity');
+            activities.forEach(act => {
+                const option = document.createElement('option');
+                option.value = act;
+                option.textContent = act;
+                activitySelect.appendChild(option);
+            });
+        }
+
+        function applyFilters() {
+            const employeeFilter = document.getElementById('filterEmployee').value;
+            const dateFromFilter = document.getElementById('filterDateFrom').value;
+            const dateToFilter = document.getElementById('filterDateTo').value;
+            const locationFilter = document.getElementById('filterLocation').value;
+            const activityFilter = document.getElementById('filterActivity').value;
+
+            filteredRegistrations = allRegistrations.filter(reg => {
+                if (employeeFilter && reg.employeeId !== employeeFilter) return false;
+                if (dateFromFilter && reg.date < dateFromFilter) return false;
+                if (dateToFilter && reg.date > dateToFilter) return false;
+                if (locationFilter && reg.location !== locationFilter) return false;
+                if (activityFilter && reg.activity !== activityFilter) return false;
+                return true;
+            });
+
+            displayRegistrations();
+            updateActiveFiltersCount();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterEmployee').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('filterLocation').value = '';
+            document.getElementById('filterActivity').value = '';
+
+            filteredRegistrations = [...allRegistrations];
+            displayRegistrations();
+            updateActiveFiltersCount();
+        }
+
+        function toggleFilters() {
+            const filtersBody = document.getElementById('filtersBody');
+            const chevron = document.getElementById('filtersChevron');
+
+            if (filtersBody.style.display === 'none') {
+                filtersBody.style.display = 'block';
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                filtersBody.style.display = 'none';
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function updateActiveFiltersCount() {
+            const filters = [
+                document.getElementById('filterEmployee').value,
+                document.getElementById('filterDateFrom').value,
+                document.getElementById('filterDateTo').value,
+                document.getElementById('filterLocation').value,
+                document.getElementById('filterActivity').value
+            ];
+
+            const activeCount = filters.filter(filter => filter !== '').length;
+            const countElement = document.getElementById('activeFiltersCount');
+
+            if (activeCount > 0) {
+                countElement.textContent = `${activeCount} filtri attivi`;
+                countElement.style.display = 'inline-block';
+            } else {
+                countElement.style.display = 'none';
+            }
+        }
+
+        function displayRegistrations() {
+            const tbody = document.getElementById('hoursTable');
+            const totalRecords = filteredRegistrations.length;
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+
+            // Assicurati che currentPage sia valida
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
+            if (currentPage < 1) {
+                currentPage = 1;
+            }
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalRecords);
+            const currentRecords = filteredRegistrations.slice(startIndex, endIndex);
+
+            document.getElementById('recordsCount').textContent = `${totalRecords} record trovati (pagina ${currentPage} di ${totalPages || 1})`;
+
+            if (currentRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-neutral-500 py-8">Nessuna registrazione trovata</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentRecords.map(reg => `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="record-checkbox" value="${reg.id}-${reg.employeeId}" onchange="updateSelection()">
+                    </td>
+                    <td class="font-medium">${reg.employeeName}</td>
+                    <td>${window.UI.formatDate(reg.date)}</td>
+                    <td>${reg.location}</td>
+                    <td>${reg.activity}</td>
+                    <td>${reg.startTime} - ${reg.endTime}</td>
+                    <td>${reg.breakStart && reg.breakEnd ? `${reg.breakStart} - ${reg.breakEnd}` : '-'}</td>
+                    <td class="font-medium">${reg.totalHours}</td>
+                    <td class="max-w-32 truncate" title="${reg.notes || ''}">${reg.notes || '-'}</td>
+                    <td>
+                        <div class="flex gap-1">
+                            <button class="btn btn-sm btn-outline" onclick="editRecord('${reg.id}', '${reg.employeeId}')" title="Modifica">
+                                <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteRecord('${reg.id}', '${reg.employeeId}')" title="Elimina">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+            selectedRecords.clear();
+            updateBulkActions();
+            updatePaginationControls(totalRecords, totalPages);
+        }
+
+        function updatePaginationControls(totalRecords, totalPages) {
+            const paginationControls = document.getElementById('paginationControls');
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+
+            // Mostra i controlli solo se ci sono più record di itemsPerPage
+            if (totalRecords > itemsPerPage) {
+                paginationControls.style.display = 'flex';
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage === totalPages;
+            } else {
+                paginationControls.style.display = 'none';
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayRegistrations();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredRegistrations.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayRegistrations();
+            }
+        }
+
+        async function updateSummaryCards() {
+            try {
+                // Carica utenti da Firestore
+                const allUsers = await window.Storage.getAllUsers();
+                const employees = allUsers.filter(user => user.role === 'employee');
+                document.getElementById('activeEmployees').textContent = employees.length;
+
+                const today = new Date().toISOString().split('T')[0];
+                const currentMonth = new Date().toISOString().slice(0, 7);
+
+                const todayRegistrations = allRegistrations.filter(reg => reg.date === today);
+                document.getElementById('registrationsToday').textContent = todayRegistrations.length;
+
+                const monthRegistrations = allRegistrations.filter(reg => reg.date && reg.date.startsWith(currentMonth));
+                const totalHours = monthRegistrations.reduce((sum, reg) => {
+                    if (!reg.totalHours) return sum;
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    return sum + parseInt(hours || 0) + (parseInt(minutes || 0) / 60);
+                }, 0);
+
+                document.getElementById('totalHoursMonth').textContent = Math.round(totalHours) + 'h';
+
+                const avgHours = monthRegistrations.length > 0 ? totalHours / monthRegistrations.length : 0;
+                document.getElementById('avgHoursPerDay').textContent = avgHours.toFixed(1) + 'h';
+
+                console.log(`✅ Summary cards aggiornate: ${employees.length} dipendenti, ${Math.round(totalHours)}h questo mese`);
+            } catch (error) {
+                console.error('❌ Errore aggiornamento summary cards:', error);
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.record-checkbox');
+
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+
+            updateSelection();
+        }
+
+        function updateSelection() {
+            const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+            selectedRecords.clear();
+
+            checkboxes.forEach(cb => {
+                selectedRecords.add(cb.value);
+            });
+
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+
+            if (selectedRecords.size > 0) {
+                bulkActions.style.display = 'block';
+                selectedCount.textContent = `${selectedRecords.size} record selezionati`;
+            } else {
+                bulkActions.style.display = 'none';
+            }
+        }
+
+        function editRecord(recordId, employeeId) {
+            const record = allRegistrations.find(reg => reg.id == recordId && reg.employeeId == employeeId);
+            if (!record) return;
+
+            document.getElementById('editRecordId').value = recordId;
+            document.getElementById('editEmployeeId').value = employeeId;
+            document.getElementById('editDate').value = record.date;
+            document.getElementById('editLocation').value = record.location;
+            document.getElementById('editStartTime').value = record.startTime;
+            document.getElementById('editEndTime').value = record.endTime;
+            document.getElementById('editBreakStart').value = record.breakStart || '';
+            document.getElementById('editBreakEnd').value = record.breakEnd || '';
+            document.getElementById('editActivity').value = record.activity;
+            document.getElementById('editNotes').value = record.notes || '';
+
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function saveEdit() {
+            const recordId = document.getElementById('editRecordId').value;
+            const employeeId = document.getElementById('editEmployeeId').value;
+
+            const updatedRecord = {
+                date: document.getElementById('editDate').value,
+                location: document.getElementById('editLocation').value,
+                startTime: document.getElementById('editStartTime').value,
+                endTime: document.getElementById('editEndTime').value,
+                breakStart: document.getElementById('editBreakStart').value,
+                breakEnd: document.getElementById('editBreakEnd').value,
+                activity: document.getElementById('editActivity').value,
+                notes: document.getElementById('editNotes').value
+            };
+
+            // Calculate new total hours
+            const start = timeToMinutes(updatedRecord.startTime);
+            const end = timeToMinutes(updatedRecord.endTime);
+            let totalMinutes = end - start;
+
+            if (updatedRecord.breakStart && updatedRecord.breakEnd) {
+                const breakStart = timeToMinutes(updatedRecord.breakStart);
+                const breakEnd = timeToMinutes(updatedRecord.breakEnd);
+                totalMinutes -= (breakEnd - breakStart);
+            }
+
+            updatedRecord.totalHours = minutesToTime(Math.max(0, totalMinutes));
+
+            // Update in Firestore
+            try {
+                const success = await window.Storage.updateTimeRegistration(employeeId, recordId, updatedRecord);
+
+                if (success) {
+                    window.UI.showToast('Registrazione aggiornata con successo', 'success');
+                    closeEditModal();
+                    await loadAllRegistrations();
+                    await updateSummaryCards();
+                } else {
+                    window.UI.showToast('Impossibile aggiornare la registrazione. Riprova più tardi.', 'error');
+                }
+            } catch (error) {
+                console.error('❌ Errore save edit:', error);
+                window.UI.showToast('Errore di connessione durante l\'aggiornamento. Verifica la rete.', 'error');
+            }
+        }
+
+        async function deleteRecord(recordId, employeeId) {
+            if (confirm('Sei sicuro di voler eliminare questa registrazione?')) {
+                try {
+                    const success = await window.Storage.deleteTimeRegistration(employeeId, recordId);
+
+                    if (success) {
+                        window.UI.showToast('Registrazione eliminata', 'success');
+                        await loadAllRegistrations();
+                        await updateSummaryCards();
+                    } else {
+                        window.UI.showToast('Impossibile eliminare la registrazione. Riprova più tardi.', 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ Errore delete record:', error);
+                    window.UI.showToast('Errore di connessione durante l\'eliminazione. Verifica la rete.', 'error');
+                }
+            }
+        }
+
+        async function bulkDelete() {
+            if (selectedRecords.size === 0) return;
+
+            if (confirm(`Sei sicuro di voler eliminare ${selectedRecords.size} registrazioni?`)) {
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (const recordKey of selectedRecords) {
+                    const [recordId, employeeId] = recordKey.split('-');
+
+                    try {
+                        const success = await window.Storage.deleteTimeRegistration(employeeId, recordId);
+                        if (success) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                    } catch (error) {
+                        console.error(`❌ Errore eliminazione ${recordId}:`, error);
+                        errorCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    window.UI.showToast(`${successCount} registrazioni eliminate`, 'success');
+                }
+                if (errorCount > 0) {
+                    window.UI.showToast(`Errore nell'eliminazione di ${errorCount} registrazioni`, 'error');
+                }
+
+                selectedRecords.clear();
+                await loadAllRegistrations();
+                await updateSummaryCards();
+            }
+        }
+
+        function exportToExcel() {
+            // Funzione helper per formattare la data
+            function formatDate(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+
+            // Prepara i dati per Excel
+            const headers = ['Dipendente', 'Data', 'Luogo', 'Attività', 'Ora Inizio', 'Ora Fine', 'Inizio Pausa', 'Fine Pausa', 'Ore Totali', 'Note'];
+
+            const data = filteredRegistrations.map(reg => [
+                reg.employeeName,
+                formatDate(reg.date),
+                reg.location,
+                reg.activity,
+                reg.startTime || '',
+                reg.endTime || '',
+                reg.breakStart || '',
+                reg.breakEnd || '',
+                reg.totalHours,
+                reg.notes || ''
+            ]);
+
+            // Crea il workbook
+            const wb = XLSX.utils.book_new();
+            const ws_data = [headers, ...data];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Stile per l'intestazione
+            const headerStyle = {
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                fill: { fgColor: { rgb: "0066FF" } },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+
+            // Applica stile all'intestazione
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_col(C) + "1";
+                if (!ws[address]) continue;
+                ws[address].s = headerStyle;
+            }
+
+            // Imposta larghezza colonne
+            ws['!cols'] = [
+                { wch: 20 }, // Dipendente
+                { wch: 12 }, // Data
+                { wch: 25 }, // Luogo
+                { wch: 20 }, // Attività
+                { wch: 12 }, // Ora Inizio
+                { wch: 12 }, // Ora Fine
+                { wch: 12 }, // Inizio Pausa
+                { wch: 12 }, // Fine Pausa
+                { wch: 12 }, // Ore Totali
+                { wch: 40 }  // Note
+            ];
+
+            // Aggiungi bordi e allineamento alle celle dati
+            for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const address = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[address]) continue;
+                    ws[address].s = {
+                        border: {
+                            top: { style: "thin", color: { rgb: "D1D5DB" } },
+                            bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+                            left: { style: "thin", color: { rgb: "D1D5DB" } },
+                            right: { style: "thin", color: { rgb: "D1D5DB" } }
+                        },
+                        alignment: { vertical: "center", wrapText: true }
+                    };
+                }
+            }
+
+            // Aggiungi il foglio al workbook
+            XLSX.utils.book_append_sheet(wb, ws, "Ore Dipendenti");
+
+            // Esporta
+            XLSX.writeFile(wb, `ore-dipendenti-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+            window.UI.showToast('Export Excel completato', 'success');
+        }
+
+        // Helper functions
+        function timeToMinutes(timeString) {
+            if (!timeString) return 0;
+            const [hours, minutes] = timeString.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function minutesToTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}:${mins.toString().padStart(2, '0')}`;
+        }
+    </script>
+
+    <!-- Modal Styles -->
+    <style>
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .max-w-32 {
+            max-width: 8rem;
+        }
+
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Compact Cards Styles */
+        .card-compact {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .card-compact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Cursor pointer for clickable elements */
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        /* Transition for chevron rotation */
+        .transition-transform {
+            transition: transform 0.2s ease;
+        }
+
+        /* Active filters badge styles */
+        .bg-primary-100 {
+            background-color: rgba(0, 102, 255, 0.1);
+        }
+
+        .text-primary-700 {
+            color: #1d4ed8;
+        }
+
+        /* Filters header hover effect */
+        .card-header.cursor-pointer:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Fixed readable colors for card texts */
+        .card-icon-color {
+            color: #0066FF !important;
+        }
+
+        .card-number-color {
+            color: #1F2937 !important;
+        }
+
+        .card-label-color {
+            color: #6B7280 !important;
+        }
+
+        /* Horizontal filters layout utilities */
+        .min-w-36 {
+            min-width: 9rem;
+        }
+
+        .min-w-40 {
+            min-width: 10rem;
+        }
+
+        .flex-1 {
+            flex: 1 1 0%;
+        }
+
+        .items-end {
+            align-items: flex-end;
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+    </style>
+</body>
+</html>

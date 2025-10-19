@@ -1,0 +1,622 @@
+/* Responsive Design - Mobile First Approach */
+
+/* ===== BASE RESPONSIVE UTILITIES ===== */
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+.tablet-only {
+  display: none;
+}
+
+/* ===== MOBILE MENU TOGGLE ===== */
+.mobile-menu-toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: all var(--transition-fast);
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== EXTRA LARGE SCREENS (1536px and up) ===== */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
+  }
+
+  .hero-title {
+    font-size: 4rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.5rem;
+  }
+}
+
+/* ===== LARGE SCREENS (1280px - 1535px) ===== */
+@media (max-width: 1535px) {
+  .container {
+    max-width: 1200px;
+  }
+}
+
+/* ===== MEDIUM-LARGE SCREENS (1024px - 1279px) ===== */
+@media (max-width: 1279px) {
+  .container {
+    max-width: 1000px;
+  }
+
+  .grid-cols-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== TABLET LANDSCAPE (1024px and below) ===== */
+@media (max-width: 1024px) {
+  /* Show mobile menu toggle */
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .tablet-only {
+    display: block;
+  }
+
+  /* Sidebar becomes overlay */
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    height: 100vh;
+    width: var(--sidebar-width);
+    z-index: var(--z-modal);
+    transition: left var(--transition-normal);
+  }
+
+  .sidebar.open {
+    left: 0;
+    box-shadow: var(--shadow-elevation-5);
+  }
+
+  /* Overlay when sidebar is open */
+  .app-layout.sidebar-open::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: calc(var(--z-modal) - 1);
+    animation: fadeIn 0.3s ease;
+  }
+
+  /* Main content takes full width */
+  .main-content {
+    width: 100%;
+  }
+
+  /* Hide search in header */
+  .header-search {
+    display: none;
+  }
+
+  /* Grid adjustments */
+  .grid-cols-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-cols-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Card adjustments */
+  .card {
+    padding: var(--spacing-6);
+  }
+
+  /* Login container */
+  .login-container {
+    grid-template-columns: 45% 55%;
+  }
+
+  .login-form-section {
+    padding: var(--spacing-6);
+  }
+
+  .hero-title {
+    font-size: var(--text-4xl);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-lg);
+  }
+
+  /* Font size adjustments */
+  .page-title {
+    font-size: var(--text-2xl);
+  }
+
+  .header-title {
+    font-size: var(--text-xl);
+  }
+}
+
+/* ===== TABLET PORTRAIT (768px - 1023px) ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet-only {
+    display: block;
+  }
+
+  /* Optimize for tablet portrait */
+  .grid-cols-4,
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Card spacing */
+  .card {
+    padding: var(--spacing-5);
+  }
+
+  /* Modal size */
+  .modal {
+    max-width: 600px;
+  }
+}
+
+/* ===== MOBILE DEVICES (768px and below) ===== */
+@media (max-width: 768px) {
+  /* Show mobile elements */
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only,
+  .tablet-only {
+    display: none;
+  }
+
+  /* Hide login hero section */
+  .login-container {
+    grid-template-columns: 1fr;
+  }
+
+  .login-hero-section {
+    display: none;
+  }
+
+  .login-form-section {
+    padding: var(--spacing-4);
+  }
+
+  .login-form-container {
+    max-width: 100%;
+  }
+
+  /* Page content spacing */
+  .page-content {
+    padding: var(--spacing-4);
+  }
+
+  /* Header adjustments */
+  .header {
+    padding: 0 var(--spacing-4);
+    height: 64px;
+  }
+
+  .header-left {
+    gap: var(--spacing-2);
+  }
+
+  .header-title {
+    font-size: var(--text-lg);
+  }
+
+  .breadcrumb {
+    display: none;
+  }
+
+  /* Grid - single column */
+  .grid-cols-6,
+  .grid-cols-5,
+  .grid-cols-4,
+  .grid-cols-3,
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Card adjustments */
+  .card {
+    padding: var(--spacing-4);
+    border-radius: var(--radius-xl);
+  }
+
+  /* Typography */
+  .hero-title {
+    font-size: var(--text-3xl);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-base);
+  }
+
+  .page-title {
+    font-size: var(--text-xl);
+  }
+
+  .page-subtitle {
+    font-size: var(--text-base);
+  }
+
+  /* Table responsive */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    min-width: 600px;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--text-xs);
+  }
+
+  /* Modal adjustments */
+  .modal {
+    margin: var(--spacing-4);
+    max-width: calc(100% - 2rem);
+    border-radius: var(--radius-xl);
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--spacing-4);
+  }
+
+  /* Button adjustments */
+  .btn-lg {
+    padding: var(--spacing-3) var(--spacing-6);
+    font-size: var(--text-base);
+  }
+
+  .btn-md {
+    padding: var(--spacing-2-5) var(--spacing-5);
+    font-size: var(--text-sm);
+  }
+
+  /* Page actions stack vertically */
+  .page-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .page-actions .btn {
+    width: 100%;
+  }
+
+  /* Toast container */
+  .toast-container {
+    left: var(--spacing-4);
+    right: var(--spacing-4);
+    top: var(--spacing-4);
+    max-width: none;
+  }
+
+  /* Sidebar full width */
+  .sidebar {
+    width: 85%;
+    max-width: 320px;
+  }
+}
+
+/* ===== SMALL MOBILE (640px and below) ===== */
+@media (max-width: 640px) {
+  /* Container spacing */
+  .container {
+    padding: 0 var(--spacing-3);
+  }
+
+  /* Header */
+  .header {
+    padding: 0 var(--spacing-3);
+  }
+
+  .header-right {
+    gap: var(--spacing-2);
+  }
+
+  /* Hide user info text */
+  .user-info {
+    display: none;
+  }
+
+  .user-name,
+  .user-role {
+    display: none;
+  }
+
+  /* Sidebar full width on small screens */
+  .sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Navigation items */
+  .nav-item {
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--text-sm);
+  }
+
+  /* Input adjustments */
+  .input-group input,
+  .input-group textarea,
+  .input-group select {
+    padding: var(--spacing-3);
+    font-size: var(--text-sm);
+  }
+
+  .input-group label {
+    font-size: var(--text-sm);
+  }
+
+  /* Badge sizing */
+  .badge {
+    font-size: var(--text-xs);
+    padding: var(--spacing-1) var(--spacing-2);
+  }
+
+  /* Avatar sizing */
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: var(--text-xs);
+  }
+
+  /* Modal full screen on very small devices */
+  .modal {
+    margin: 0;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+
+  /* Page content */
+  .page-content {
+    padding: var(--spacing-3);
+  }
+
+  /* Hero features stack */
+  .hero-features {
+    gap: var(--spacing-3);
+  }
+
+  .hero-feature {
+    font-size: var(--text-base);
+  }
+
+  /* Form spacing */
+  .login-form .input-group {
+    margin-bottom: var(--spacing-4);
+  }
+
+  /* Login logo */
+  .login-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .login-title {
+    font-size: var(--text-2xl);
+  }
+
+  .login-subtitle {
+    font-size: var(--text-base);
+  }
+}
+
+/* ===== EXTRA SMALL MOBILE (480px and below) ===== */
+@media (max-width: 480px) {
+  /* Typography */
+  .hero-title {
+    font-size: var(--text-2xl);
+  }
+
+  .page-title {
+    font-size: var(--text-lg);
+  }
+
+  .card-title {
+    font-size: var(--text-lg);
+  }
+
+  /* Spacing */
+  .page-content {
+    padding: var(--spacing-2);
+  }
+
+  .card {
+    padding: var(--spacing-3);
+  }
+
+  /* Buttons */
+  .btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    font-size: var(--text-sm);
+  }
+
+  .btn-lg {
+    padding: var(--spacing-3) var(--spacing-5);
+    font-size: var(--text-sm);
+  }
+
+  /* Grid gap */
+  .grid {
+    gap: var(--spacing-3);
+  }
+}
+
+/* ===== LANDSCAPE ORIENTATION FOR MOBILE ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Adjust for landscape on mobile */
+  .login-container {
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .login-form-section {
+    padding: var(--spacing-4);
+  }
+
+  .login-logo {
+    margin-bottom: var(--spacing-4);
+  }
+
+  .login-logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .login-title {
+    font-size: var(--text-xl);
+  }
+
+  .input-group {
+    margin-bottom: var(--spacing-3);
+  }
+
+  /* Sidebar in landscape */
+  .sidebar {
+    max-width: 280px;
+  }
+
+  /* Header reduced height */
+  .header {
+    height: 56px;
+  }
+}
+
+/* ===== TOUCH DEVICE OPTIMIZATIONS ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .nav-item {
+    min-height: 44px;
+  }
+
+  .dropdown-item {
+    min-height: 44px;
+  }
+
+  .modal-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Remove hover effects */
+  .btn:hover,
+  .card:hover,
+  .nav-item:hover {
+    transform: none;
+  }
+
+  /* Add active states for touch */
+  .btn:active {
+    transform: scale(0.95);
+  }
+
+  .nav-item:active {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .sidebar,
+  .header,
+  .mobile-menu-toggle,
+  .btn,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  .page-content {
+    padding: 0;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* ===== ACCESSIBILITY - REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+@media (prefers-contrast: high) {
+  .btn {
+    border: 2px solid currentColor;
+  }
+
+  .card {
+    border: 2px solid var(--neutral-900);
+  }
+
+  .input-group input,
+  .input-group textarea,
+  .input-group select {
+    border: 2px solid var(--neutral-900);
+  }
+}

@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report - CAME Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- XLSX Library for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/effects.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Admin Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00D9B1;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="24" cy="24" r="22" fill="url(#logoGradient)"/>
+                        <path d="M18 16C21.866 16 25 19.134 25 23C25 26.866 21.866 30 18 30" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M29 30L33 16L37 30" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M31 26H35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="logo-text">CAME</div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a href="admin-dashboard.html" class="nav-item">
+                        <i data-lucide="bar-chart-3" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Panoramica</span>
+                    </a>
+                    <a href="admin-approvals.html" class="nav-item">
+                        <i data-lucide="check-circle" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Approvazioni</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestione</div>
+                    <a href="#" class="nav-item">
+                        <i data-lucide="users" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Dipendenti</span>
+                    </a>
+                    <a href="admin-employee-hours.html" class="nav-item">
+                        <i data-lucide="clock-3" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Ore Dipendenti</span>
+                    </a>
+                    <a href="admin-reports.html" class="nav-item active">
+                        <i data-lucide="file-text" class="nav-item-icon"></i>
+                        <span class="sidebar-label">Report</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="nav-item w-full" onclick="safeLogout()" style="border: none; background: none; text-align: left;">
+                    <i data-lucide="log-out" class="nav-item-icon"></i>
+                    <span class="sidebar-label">Esci</span>
+                </button>
+            </div>
+
+            <button class="sidebar-toggle" aria-label="Chiudi menu laterale">
+                <i data-lucide="chevron-left"></i>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="sidebar-toggle" data-sidebar-toggle aria-label="Apri menu laterale">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <h1 class="header-title">Report e Analisi</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-outline btn-sm" onclick="safeLogout()" title="Esci dall'applicazione">
+                        <i data-lucide="log-out"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <!-- Report Generation Section -->
+                <div class="card card-text-dark mb-6" style="max-width: 1000px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Genera Report</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Main Filters - Horizontal Layout -->
+                        <div class="flex flex-wrap items-end gap-4 mb-4">
+                            <div class="form-group" style="min-width: 180px;">
+                                <label for="reportType" class="form-label">Tipo</label>
+                                <select id="reportType" class="form-input" onchange="updateFilterOptions()">
+                                    <option value="hours">Ore Lavorate</option>
+                                    <option value="employee">Per Dipendente</option>
+                                    <option value="location">Per Luogo</option>
+                                    <option value="activity">Per Attività</option>
+                                    <option value="summary">Riepilogativo</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="min-width: 150px;">
+                                <label for="reportPeriod" class="form-label">Periodo</label>
+                                <select id="reportPeriod" class="form-input" onchange="updateDateInputs()">
+                                    <option value="week">Settimana</option>
+                                    <option value="month">Mese</option>
+                                    <option value="quarter">Trimestre</option>
+                                    <option value="year">Anno</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="customDateFrom" style="display: none; min-width: 130px;">
+                                <label for="reportDateFrom" class="form-label">Da</label>
+                                <input type="date" id="reportDateFrom" class="form-input">
+                            </div>
+                            <div class="form-group" id="customDateTo" style="display: none; min-width: 130px;">
+                                <label for="reportDateTo" class="form-label">A</label>
+                                <input type="date" id="reportDateTo" class="form-input">
+                            </div>
+                            <div class="form-group" id="employeeFilterGroup" style="min-width: 140px;">
+                                <label for="employeeFilter" class="form-label">Dipendente</label>
+                                <select id="employeeFilter" class="form-input">
+                                    <option value="">Tutti</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="locationFilterGroup" style="min-width: 120px;">
+                                <label for="locationFilter" class="form-label">Luogo</label>
+                                <select id="locationFilter" class="form-input">
+                                    <option value="">Tutti</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="activityFilterGroup" style="min-width: 120px;">
+                                <label for="activityFilter" class="form-label">Attività</label>
+                                <select id="activityFilter" class="form-input">
+                                    <option value="">Tutte</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2">
+                            <button class="btn btn-primary btn-sm" onclick="generateReport()">
+                                <i data-lucide="file-text"></i>
+                                Genera
+                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="exportReport('pdf')">
+                                <i data-lucide="file-down"></i>
+                                PDF
+                            </button>
+                            <button class="btn btn-outline btn-sm" onclick="exportReport('excel')">
+                                <i data-lucide="table"></i>
+                                Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Hours Trend Chart -->
+                    <div class="card card-text-dark">
+                        <div class="card-header">
+                            <h3 class="card-title">Trend Ore Lavorate</h3>
+                            <p class="card-subtitle">Andamento giornaliero delle ore</p>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="hoursTrendChart" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Employee Performance Chart -->
+                    <div class="card card-text-dark">
+                        <div class="card-header">
+                            <h3 class="card-title">Performance per Dipendente</h3>
+                            <p class="card-subtitle">Ore lavorate per dipendente</p>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="employeeChart" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Location Distribution Chart -->
+                    <div class="card card-text-dark">
+                        <div class="card-header">
+                            <h3 class="card-title">Distribuzione per Luoghi</h3>
+                            <p class="card-subtitle">Ore lavorate per location</p>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="locationChart" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Activity Distribution Chart -->
+                    <div class="card card-text-dark">
+                        <div class="card-header">
+                            <h3 class="card-title">Distribuzione per Attività</h3>
+                            <p class="card-subtitle">Ripartizione delle attività</p>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="activityChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Results -->
+                <div id="reportResults" class="card card-text-dark" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title">Risultati Report</h3>
+                        <div class="flex items-center gap-2">
+                            <span id="reportDate" class="text-sm text-neutral-600"></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="reportContent">
+                            <!-- Report content will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="card card-compact text-center">
+                        <i data-lucide="clock" class="text-2xl text-primary-600 mb-2"></i>
+                        <div class="text-lg font-bold text-neutral-900" id="totalHoursReport">0h</div>
+                        <div class="text-xs text-neutral-600">Ore Totali</div>
+                    </div>
+
+                    <div class="card card-compact text-center">
+                        <i data-lucide="users" class="text-2xl text-success-600 mb-2"></i>
+                        <div class="text-lg font-bold text-neutral-900" id="activeEmployeesReport">0</div>
+                        <div class="text-xs text-neutral-600">Dipendenti Attivi</div>
+                    </div>
+
+                    <div class="card card-compact text-center">
+                        <i data-lucide="map-pin" class="text-2xl text-secondary-600 mb-2"></i>
+                        <div class="text-lg font-bold text-neutral-900" id="uniqueLocationsReport">0</div>
+                        <div class="text-xs text-neutral-600">Luoghi Unici</div>
+                    </div>
+
+                    <div class="card card-compact text-center">
+                        <i data-lucide="trending-up" class="text-2xl text-warning-600 mb-2"></i>
+                        <div class="text-lg font-bold text-neutral-900" id="avgHoursReport">0h</div>
+                        <div class="text-xs text-neutral-600">Media Giornaliera</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+
+    <script>
+        let allRegistrations = [];
+
+        // Check authentication
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔄 DOM loaded, checking modules...');
+
+            const checkModules = () => {
+                const modules = {
+                    Auth: typeof window.Auth !== 'undefined',
+                    UI: typeof window.UI !== 'undefined',
+                    Data: typeof window.Data !== 'undefined',
+                    Storage: typeof window.Storage !== 'undefined'
+                };
+
+                console.log('📦 Modules status:', modules);
+
+                if (!modules.Auth || !window.Auth.getCurrentUser) {
+                    console.error('❌ Auth module not loaded properly');
+                    alert('Errore di caricamento moduli. Redirecting to login...');
+                    window.location.replace('index.html');
+                    return false;
+                }
+
+                const currentUser = window.Auth.getCurrentUser();
+                console.log('👤 Current user:', currentUser);
+
+                if (!currentUser || currentUser.role !== 'admin') {
+                    console.log('⛔ Access denied: Admin role required');
+                    localStorage.removeItem('came_session');
+                    window.location.replace('index.html');
+                    return false;
+                }
+
+                console.log('✅ Admin access granted for:', currentUser.firstName, currentUser.lastName);
+                return true;
+            };
+
+            if (checkModules()) {
+                initializeReports();
+            } else {
+                setTimeout(() => {
+                    if (checkModules()) {
+                        initializeReports();
+                    }
+                }, 500);
+            }
+        });
+
+        async function initializeReports() {
+            lucide.createIcons();
+            await loadReportData();
+            initializeCharts();
+            updateQuickStats();
+            populateFilterOptions();
+        }
+
+        function safeLogout() {
+            if (typeof window.Auth !== 'undefined' && window.Auth.logout) {
+                window.Auth.logout();
+            } else {
+                console.log('Auth not available, performing manual logout');
+                localStorage.removeItem('came_session');
+                localStorage.removeItem('came_timesheet_data');
+                localStorage.removeItem('came_requests_data');
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function loadReportData() {
+            console.log('🔄 Caricamento dati report da Firestore...');
+
+            try {
+                // Carica tutte le registrazioni dalla collezione centralizzata
+                const timeRegs = await window.Storage.getAllTimeRegistrations();
+
+                console.log(`✅ Caricate ${timeRegs.length} registrazioni ore`);
+
+                // Mappa i dati per i report
+                allRegistrations = timeRegs.map(reg => ({
+                    ...reg,
+                    employeeId: reg.userId,
+                    employeeName: reg.userName || '-'
+                }));
+
+                // Sort by date
+                allRegistrations.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                console.log(`📊 Report data loaded: ${allRegistrations.length} registrazioni`);
+
+            } catch (error) {
+                console.error('❌ Errore caricamento dati report:', error);
+                window.UI.showToast('Impossibile caricare i dati per il report. Verifica la connessione.', 'error');
+                allRegistrations = [];
+            }
+        }
+
+        function updateDateInputs() {
+            const period = document.getElementById('reportPeriod').value;
+            const customDateFrom = document.getElementById('customDateFrom');
+            const customDateTo = document.getElementById('customDateTo');
+
+            if (period === 'custom') {
+                customDateFrom.style.display = 'block';
+                customDateTo.style.display = 'block';
+            } else {
+                customDateFrom.style.display = 'none';
+                customDateTo.style.display = 'none';
+            }
+        }
+
+        function populateFilterOptions() {
+            // Get unique employees
+            const employees = [...new Set(allRegistrations.map(reg => reg.employeeName))].sort();
+            const employeeSelect = document.getElementById('employeeFilter');
+            employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee;
+                option.textContent = employee;
+                employeeSelect.appendChild(option);
+            });
+
+            // Get unique locations
+            const locations = [...new Set(allRegistrations.map(reg => reg.location))].sort();
+            const locationSelect = document.getElementById('locationFilter');
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationSelect.appendChild(option);
+            });
+
+            // Get unique activities
+            const activities = [...new Set(allRegistrations.map(reg => reg.activity))].sort();
+            const activitySelect = document.getElementById('activityFilter');
+            activities.forEach(activity => {
+                const option = document.createElement('option');
+                option.value = activity;
+                option.textContent = activity;
+                activitySelect.appendChild(option);
+            });
+        }
+
+        function updateFilterOptions() {
+            const reportType = document.getElementById('reportType').value;
+            const employeeFilter = document.getElementById('employeeFilterGroup');
+            const locationFilter = document.getElementById('locationFilterGroup');
+            const activityFilter = document.getElementById('activityFilterGroup');
+
+            // Show/hide relevant filters based on report type
+            switch (reportType) {
+                case 'employee':
+                    employeeFilter.style.display = 'block';
+                    locationFilter.style.display = 'block';
+                    activityFilter.style.display = 'block';
+                    break;
+                case 'location':
+                    employeeFilter.style.display = 'block';
+                    locationFilter.style.display = 'block';
+                    activityFilter.style.display = 'block';
+                    break;
+                case 'activity':
+                    employeeFilter.style.display = 'block';
+                    locationFilter.style.display = 'block';
+                    activityFilter.style.display = 'block';
+                    break;
+                default:
+                    employeeFilter.style.display = 'block';
+                    locationFilter.style.display = 'block';
+                    activityFilter.style.display = 'block';
+                    break;
+            }
+        }
+
+        function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            const reportPeriod = document.getElementById('reportPeriod').value;
+
+            let filteredData = filterDataByPeriod(allRegistrations, reportPeriod);
+
+            // Apply advanced filters
+            filteredData = applyAdvancedFilters(filteredData);
+
+            let reportContent = '';
+
+            switch (reportType) {
+                case 'hours':
+                    reportContent = generateHoursReport(filteredData);
+                    break;
+                case 'employee':
+                    reportContent = generateEmployeeReport(filteredData);
+                    break;
+                case 'location':
+                    reportContent = generateLocationReport(filteredData);
+                    break;
+                case 'activity':
+                    reportContent = generateActivityReport(filteredData);
+                    break;
+                case 'summary':
+                    reportContent = generateSummaryReport(filteredData);
+                    break;
+            }
+
+            document.getElementById('reportResults').style.display = 'block';
+            document.getElementById('reportContent').innerHTML = reportContent;
+            document.getElementById('reportDate').textContent = `Generato il ${new Date().toLocaleString('it-IT')}`;
+
+            // Update charts with filtered data
+            updateChartsWithData(filteredData);
+
+            window.UI.showToast('Report generato con successo', 'success');
+        }
+
+        function filterDataByPeriod(data, period) {
+            const now = new Date();
+            let startDate, endDate;
+
+            switch (period) {
+                case 'week':
+                    startDate = new Date(now);
+                    startDate.setDate(now.getDate() - now.getDay() + 1);
+                    endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 6);
+                    break;
+                case 'month':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    break;
+                case 'quarter':
+                    const quarter = Math.floor(now.getMonth() / 3);
+                    startDate = new Date(now.getFullYear(), quarter * 3, 1);
+                    endDate = new Date(now.getFullYear(), quarter * 3 + 3, 0);
+                    break;
+                case 'year':
+                    startDate = new Date(now.getFullYear(), 0, 1);
+                    endDate = new Date(now.getFullYear(), 11, 31);
+                    break;
+                case 'custom':
+                    startDate = new Date(document.getElementById('reportDateFrom').value);
+                    endDate = new Date(document.getElementById('reportDateTo').value);
+                    break;
+                default:
+                    return data;
+            }
+
+            return data.filter(reg => {
+                const regDate = new Date(reg.date);
+                return regDate >= startDate && regDate <= endDate;
+            });
+        }
+
+        function applyAdvancedFilters(data) {
+            const employeeFilter = document.getElementById('employeeFilter').value;
+            const locationFilter = document.getElementById('locationFilter').value;
+            const activityFilter = document.getElementById('activityFilter').value;
+
+            let filteredData = data;
+
+            if (employeeFilter) {
+                filteredData = filteredData.filter(reg => reg.employeeName === employeeFilter);
+            }
+
+            if (locationFilter) {
+                filteredData = filteredData.filter(reg => reg.location === locationFilter);
+            }
+
+            if (activityFilter) {
+                filteredData = filteredData.filter(reg => reg.activity === activityFilter);
+            }
+
+            return filteredData;
+        }
+
+        function generateHoursReport(data) {
+            const totalHours = data.reduce((sum, reg) => {
+                const [hours, minutes] = reg.totalHours.split(':');
+                return sum + parseInt(hours) + (parseInt(minutes) / 60);
+            }, 0);
+
+            return `
+                <div class="report-section">
+                    <h4 class="text-lg font-semibold mb-4">Report Ore Lavorate</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600">${totalHours.toFixed(1)}h</div>
+                            <div class="text-sm text-blue-700">Ore Totali</div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600">${data.length}</div>
+                            <div class="text-sm text-green-700">Registrazioni</div>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-purple-600">${(totalHours / data.length || 0).toFixed(1)}h</div>
+                            <div class="text-sm text-purple-700">Media per Registro</div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Dipendente</th>
+                                    <th>Ore</th>
+                                    <th>Luogo</th>
+                                    <th>Attività</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map(reg => `
+                                    <tr>
+                                        <td>${window.UI.formatDate(reg.date)}</td>
+                                        <td>${reg.employeeName}</td>
+                                        <td class="font-medium">${reg.totalHours}</td>
+                                        <td>${reg.location}</td>
+                                        <td>${reg.activity}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateEmployeeReport(data) {
+            const selectedEmployee = document.getElementById('employeeFilter').value;
+
+            if (selectedEmployee) {
+                // Detailed report for specific employee
+                const employeeData = data.filter(reg => reg.employeeName === selectedEmployee);
+                const totalHours = employeeData.reduce((sum, reg) => {
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    return sum + parseInt(hours) + (parseInt(minutes) / 60);
+                }, 0);
+
+                // Group by location and activity
+                const locationStats = {};
+                const activityStats = {};
+
+                employeeData.forEach(reg => {
+                    if (!locationStats[reg.location]) locationStats[reg.location] = 0;
+                    if (!activityStats[reg.activity]) activityStats[reg.activity] = 0;
+
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    const regHours = parseInt(hours) + (parseInt(minutes) / 60);
+                    locationStats[reg.location] += regHours;
+                    activityStats[reg.activity] += regHours;
+                });
+
+                return `
+                    <div class="report-section">
+                        <h4 class="text-lg font-semibold mb-4">Report Dettagliato - ${selectedEmployee}</h4>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-blue-600">${totalHours.toFixed(1)}h</div>
+                                <div class="text-sm text-blue-700">Ore Totali</div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-green-600">${employeeData.length}</div>
+                                <div class="text-sm text-green-700">Registrazioni</div>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-purple-600">${(totalHours / employeeData.length || 0).toFixed(1)}h</div>
+                                <div class="text-sm text-purple-700">Media per Giorno</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-white p-4 rounded-lg border">
+                                <h5 class="font-semibold mb-3">Distribuzione per Luogo</h5>
+                                ${Object.entries(locationStats).map(([location, hours]) => `
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-sm">${location}</span>
+                                        <span class="font-medium">${hours.toFixed(1)}h</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border">
+                                <h5 class="font-semibold mb-3">Distribuzione per Attività</h5>
+                                ${Object.entries(activityStats).map(([activity, hours]) => `
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-sm">${activity}</span>
+                                        <span class="font-medium">${hours.toFixed(1)}h</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <h5 class="font-semibold mb-3">Dettaglio Registrazioni</h5>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Orario Inizio</th>
+                                        <th>Orario Fine</th>
+                                        <th>Ore Totali</th>
+                                        <th>Luogo</th>
+                                        <th>Attività</th>
+                                        <th>Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${employeeData.map(reg => `
+                                        <tr>
+                                            <td>${window.UI.formatDate(reg.date)}</td>
+                                            <td>${reg.startTime}</td>
+                                            <td>${reg.endTime}</td>
+                                            <td class="font-medium">${reg.totalHours}</td>
+                                            <td>${reg.location}</td>
+                                            <td>${reg.activity}</td>
+                                            <td class="text-sm">${reg.notes || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Overview for all employees
+                const employeeStats = {};
+
+                data.forEach(reg => {
+                    if (!employeeStats[reg.employeeName]) {
+                        employeeStats[reg.employeeName] = { hours: 0, registrations: 0 };
+                    }
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    employeeStats[reg.employeeName].hours += parseInt(hours) + (parseInt(minutes) / 60);
+                    employeeStats[reg.employeeName].registrations++;
+                });
+
+                return `
+                    <div class="report-section">
+                        <h4 class="text-lg font-semibold mb-4">Report per Dipendente - Panoramica</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${Object.entries(employeeStats).map(([name, stats]) => `
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <div class="font-semibold text-gray-900">${name}</div>
+                                    <div class="text-2xl font-bold text-blue-600 mt-2">${stats.hours.toFixed(1)}h</div>
+                                    <div class="text-sm text-gray-600">${stats.registrations} registrazioni</div>
+                                    <div class="text-sm text-gray-600">Media: ${(stats.hours / stats.registrations).toFixed(1)}h</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function generateLocationReport(data) {
+            const selectedLocation = document.getElementById('locationFilter').value;
+
+            if (selectedLocation) {
+                // Detailed report for specific location
+                const locationData = data.filter(reg => reg.location === selectedLocation);
+                const totalHours = locationData.reduce((sum, reg) => {
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    return sum + parseInt(hours) + (parseInt(minutes) / 60);
+                }, 0);
+
+                // Group by employee and activity
+                const employeeStats = {};
+                const activityStats = {};
+
+                locationData.forEach(reg => {
+                    if (!employeeStats[reg.employeeName]) employeeStats[reg.employeeName] = 0;
+                    if (!activityStats[reg.activity]) activityStats[reg.activity] = 0;
+
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    const regHours = parseInt(hours) + (parseInt(minutes) / 60);
+                    employeeStats[reg.employeeName] += regHours;
+                    activityStats[reg.activity] += regHours;
+                });
+
+                return `
+                    <div class="report-section">
+                        <h4 class="text-lg font-semibold mb-4">Report Dettagliato - ${selectedLocation}</h4>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-blue-600">${totalHours.toFixed(1)}h</div>
+                                <div class="text-sm text-blue-700">Ore Totali</div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-green-600">${locationData.length}</div>
+                                <div class="text-sm text-green-700">Visite</div>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-purple-600">${(totalHours / locationData.length || 0).toFixed(1)}h</div>
+                                <div class="text-sm text-purple-700">Media per Visita</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-white p-4 rounded-lg border">
+                                <h5 class="font-semibold mb-3">Ore per Dipendente</h5>
+                                ${Object.entries(employeeStats)
+                                    .sort((a, b) => b[1] - a[1])
+                                    .map(([employee, hours]) => `
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-sm">${employee}</span>
+                                        <span class="font-medium">${hours.toFixed(1)}h</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border">
+                                <h5 class="font-semibold mb-3">Distribuzione per Attività</h5>
+                                ${Object.entries(activityStats)
+                                    .sort((a, b) => b[1] - a[1])
+                                    .map(([activity, hours]) => `
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-sm">${activity}</span>
+                                        <span class="font-medium">${hours.toFixed(1)}h</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <h5 class="font-semibold mb-3">Dettaglio Visite</h5>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Dipendente</th>
+                                        <th>Orario Inizio</th>
+                                        <th>Orario Fine</th>
+                                        <th>Ore Totali</th>
+                                        <th>Attività</th>
+                                        <th>Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${locationData.map(reg => `
+                                        <tr>
+                                            <td>${window.UI.formatDate(reg.date)}</td>
+                                            <td>${reg.employeeName}</td>
+                                            <td>${reg.startTime}</td>
+                                            <td>${reg.endTime}</td>
+                                            <td class="font-medium">${reg.totalHours}</td>
+                                            <td>${reg.activity}</td>
+                                            <td class="text-sm">${reg.notes || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Overview for all locations
+                const locationStats = {};
+
+                data.forEach(reg => {
+                    if (!locationStats[reg.location]) {
+                        locationStats[reg.location] = { hours: 0, visits: 0 };
+                    }
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    locationStats[reg.location].hours += parseInt(hours) + (parseInt(minutes) / 60);
+                    locationStats[reg.location].visits++;
+                });
+
+                return `
+                    <div class="report-section">
+                        <h4 class="text-lg font-semibold mb-4">Report per Luogo - Panoramica</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Luogo</th>
+                                        <th>Ore Totali</th>
+                                        <th>Visite</th>
+                                        <th>Media per Visita</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${Object.entries(locationStats)
+                                        .sort((a, b) => b[1].hours - a[1].hours)
+                                        .map(([location, stats]) => `
+                                        <tr>
+                                            <td class="font-medium">${location}</td>
+                                            <td>${stats.hours.toFixed(1)}h</td>
+                                            <td>${stats.visits}</td>
+                                            <td>${(stats.hours / stats.visits).toFixed(1)}h</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function generateActivityReport(data) {
+            const activityStats = {};
+
+            data.forEach(reg => {
+                if (!activityStats[reg.activity]) {
+                    activityStats[reg.activity] = { hours: 0, count: 0 };
+                }
+                const [hours, minutes] = reg.totalHours.split(':');
+                activityStats[reg.activity].hours += parseInt(hours) + (parseInt(minutes) / 60);
+                activityStats[reg.activity].count++;
+            });
+
+            return `
+                <div class="report-section">
+                    <h4 class="text-lg font-semibold mb-4">Report per Attività</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${Object.entries(activityStats)
+                            .sort((a, b) => b[1].hours - a[1].hours)
+                            .map(([activity, stats]) => `
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                                <div class="font-semibold text-gray-900 mb-2">${activity}</div>
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="text-xl font-bold text-blue-600">${stats.hours.toFixed(1)}h</div>
+                                        <div class="text-sm text-gray-600">${stats.count} occorrenze</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-semibold text-indigo-600">${((stats.hours / data.reduce((sum, reg) => {
+                                            const [h, m] = reg.totalHours.split(':');
+                                            return sum + parseInt(h) + (parseInt(m) / 60);
+                                        }, 0)) * 100).toFixed(1)}%</div>
+                                        <div class="text-xs text-gray-500">del totale</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateSummaryReport(data) {
+            const totalHours = data.reduce((sum, reg) => {
+                const [hours, minutes] = reg.totalHours.split(':');
+                return sum + parseInt(hours) + (parseInt(minutes) / 60);
+            }, 0);
+
+            const uniqueEmployees = new Set(data.map(reg => reg.employeeName)).size;
+            const uniqueLocations = new Set(data.map(reg => reg.location)).size;
+            const uniqueActivities = new Set(data.map(reg => reg.activity)).size;
+
+            return `
+                <div class="report-section">
+                    <h4 class="text-lg font-semibold mb-6">Report Riepilogativo</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="text-center p-4 bg-blue-50 rounded-lg">
+                            <div class="text-3xl font-bold text-blue-600">${totalHours.toFixed(1)}</div>
+                            <div class="text-sm text-blue-700">Ore Totali</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="text-3xl font-bold text-green-600">${uniqueEmployees}</div>
+                            <div class="text-sm text-green-700">Dipendenti</div>
+                        </div>
+                        <div class="text-center p-4 bg-purple-50 rounded-lg">
+                            <div class="text-3xl font-bold text-purple-600">${uniqueLocations}</div>
+                            <div class="text-sm text-purple-700">Luoghi</div>
+                        </div>
+                        <div class="text-center p-4 bg-orange-50 rounded-lg">
+                            <div class="text-3xl font-bold text-orange-600">${uniqueActivities}</div>
+                            <div class="text-sm text-orange-700">Attività</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-semibold mb-2">Statistiche Generali</h5>
+                        <ul class="space-y-1 text-sm">
+                            <li>• Media ore per registrazione: ${(totalHours / data.length || 0).toFixed(1)}h</li>
+                            <li>• Media ore per dipendente: ${(totalHours / uniqueEmployees || 0).toFixed(1)}h</li>
+                            <li>• Registrazioni totali: ${data.length}</li>
+                            <li>• Periodo analizzato: ${data.length > 0 ? window.UI.formatDate(data[0].date) + ' - ' + window.UI.formatDate(data[data.length - 1].date) : 'Nessun dato'}</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        let chartInstances = {};
+
+        function initializeCharts() {
+            // Hours Trend Chart
+            const ctx1 = document.getElementById('hoursTrendChart').getContext('2d');
+            chartInstances.hoursTrend = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Ore Lavorate',
+                        data: [],
+                        borderColor: '#0066FF',
+                        backgroundColor: 'rgba(0, 102, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Ore'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Employee Chart
+            const ctx2 = document.getElementById('employeeChart').getContext('2d');
+            chartInstances.employee = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Ore per Dipendente',
+                        data: [],
+                        backgroundColor: ['#0066FF', '#8B5CF6', '#00D9B1', '#FF6B6B', '#FFE66D', '#4FACFE', '#43E97B']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Ore Lavorate'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Location Chart
+            const ctx3 = document.getElementById('locationChart').getContext('2d');
+            chartInstances.location = new Chart(ctx3, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#0066FF', '#8B5CF6', '#00D9B1', '#FF6B6B', '#FFE66D', '#4FACFE', '#43E97B', '#F093FB', '#F5576C', '#FFA726']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Activity Chart
+            const ctx4 = document.getElementById('activityChart').getContext('2d');
+            chartInstances.activity = new Chart(ctx4, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#0066FF', '#8B5CF6', '#00D9B1', '#FF6B6B', '#FFE66D', '#4FACFE', '#43E97B', '#F093FB', '#F5576C', '#FFA726']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Initialize charts with current data
+            updateChartsWithData(allRegistrations);
+        }
+
+        function updateChartsWithData(data) {
+            // Update Hours Trend Chart
+            updateHoursTrendChart(data);
+
+            // Update Employee Chart
+            updateEmployeeChart(data);
+
+            // Update Location Chart
+            updateLocationChart(data);
+
+            // Update Activity Chart
+            updateActivityChart(data);
+
+            // Update quick stats
+            updateQuickStats(data);
+        }
+
+        function updateHoursTrendChart(data) {
+            if (!chartInstances.hoursTrend) {
+                console.warn('⚠️ Hours trend chart not initialized');
+                return;
+            }
+
+            const dailyHours = {};
+
+            data.forEach(reg => {
+                const date = reg.date;
+                if (!dailyHours[date]) {
+                    dailyHours[date] = 0;
+                }
+                const [hours, minutes] = (reg.totalHours || '0:0').split(':');
+                dailyHours[date] += parseInt(hours) + (parseInt(minutes) / 60);
+            });
+
+            const sortedDates = Object.keys(dailyHours).sort();
+            const labels = sortedDates.map(date => window.UI.formatDate(date));
+            const values = sortedDates.map(date => dailyHours[date].toFixed(1));
+
+            chartInstances.hoursTrend.data.labels = labels;
+            chartInstances.hoursTrend.data.datasets[0].data = values;
+            chartInstances.hoursTrend.update();
+        }
+
+        function updateEmployeeChart(data) {
+            if (!chartInstances.employee) {
+                console.warn('⚠️ Employee chart not initialized');
+                return;
+            }
+
+            const employeeHours = {};
+
+            data.forEach(reg => {
+                if (!employeeHours[reg.employeeName]) {
+                    employeeHours[reg.employeeName] = 0;
+                }
+                const [hours, minutes] = (reg.totalHours || '0:0').split(':');
+                employeeHours[reg.employeeName] += parseInt(hours) + (parseInt(minutes) / 60);
+            });
+
+            const sortedEmployees = Object.entries(employeeHours)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10); // Top 10 employees
+
+            const labels = sortedEmployees.map(([name, hours]) => name);
+            const values = sortedEmployees.map(([name, hours]) => hours.toFixed(1));
+
+            chartInstances.employee.data.labels = labels;
+            chartInstances.employee.data.datasets[0].data = values;
+            chartInstances.employee.update();
+        }
+
+        function updateLocationChart(data) {
+            if (!chartInstances.location) {
+                console.warn('⚠️ Location chart not initialized');
+                return;
+            }
+
+            const locationHours = {};
+
+            data.forEach(reg => {
+                if (!locationHours[reg.location]) {
+                    locationHours[reg.location] = 0;
+                }
+                const [hours, minutes] = (reg.totalHours || '0:0').split(':');
+                locationHours[reg.location] += parseInt(hours) + (parseInt(minutes) / 60);
+            });
+
+            const sortedLocations = Object.entries(locationHours)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8); // Top 8 locations
+
+            const labels = sortedLocations.map(([location, hours]) => location);
+            const values = sortedLocations.map(([location, hours]) => hours.toFixed(1));
+
+            chartInstances.location.data.labels = labels;
+            chartInstances.location.data.datasets[0].data = values;
+            chartInstances.location.update();
+        }
+
+        function updateActivityChart(data) {
+            if (!chartInstances.activity) {
+                console.warn('⚠️ Activity chart not initialized');
+                return;
+            }
+
+            const activityHours = {};
+
+            data.forEach(reg => {
+                if (!activityHours[reg.activity]) {
+                    activityHours[reg.activity] = 0;
+                }
+                const [hours, minutes] = (reg.totalHours || '0:0').split(':');
+                activityHours[reg.activity] += parseInt(hours) + (parseInt(minutes) / 60);
+            });
+
+            const labels = Object.keys(activityHours);
+            const values = Object.values(activityHours).map(hours => hours.toFixed(1));
+
+            chartInstances.activity.data.labels = labels;
+            chartInstances.activity.data.datasets[0].data = values;
+            chartInstances.activity.update();
+        }
+
+        function updateQuickStats(data = allRegistrations) {
+            const totalHours = data.reduce((sum, reg) => {
+                const [hours, minutes] = reg.totalHours.split(':');
+                return sum + parseInt(hours) + (parseInt(minutes) / 60);
+            }, 0);
+
+            const uniqueEmployees = new Set(data.map(reg => reg.employeeName)).size;
+            const uniqueLocations = new Set(data.map(reg => reg.location)).size;
+            const avgHours = data.length > 0 ? totalHours / data.length : 0;
+
+            document.getElementById('totalHoursReport').textContent = totalHours.toFixed(1) + 'h';
+            document.getElementById('activeEmployeesReport').textContent = uniqueEmployees;
+            document.getElementById('uniqueLocationsReport').textContent = uniqueLocations;
+            document.getElementById('avgHoursReport').textContent = avgHours.toFixed(1) + 'h';
+        }
+
+        function exportReport(format) {
+            const reportType = document.getElementById('reportType').value;
+            const reportPeriod = document.getElementById('reportPeriod').value;
+            const currentDate = new Date().toLocaleDateString('it-IT');
+
+            if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Header
+                doc.setFontSize(20);
+                doc.text('CAME - Report Amministrativo', 20, 30);
+
+                doc.setFontSize(12);
+                doc.text(`Tipo: ${document.querySelector('#reportType option:checked').textContent}`, 20, 45);
+                doc.text(`Periodo: ${document.querySelector('#reportPeriod option:checked').textContent}`, 20, 55);
+                doc.text(`Generato il: ${currentDate}`, 20, 65);
+
+                // Get filtered data
+                let filteredData = filterDataByPeriod(allRegistrations, reportPeriod);
+                filteredData = applyAdvancedFilters(filteredData);
+
+                // Calculate totals
+                const totalHours = filteredData.reduce((sum, reg) => {
+                    const [hours, minutes] = reg.totalHours.split(':');
+                    return sum + parseInt(hours) + (parseInt(minutes) / 60);
+                }, 0);
+
+                const uniqueEmployees = new Set(filteredData.map(reg => reg.employeeName)).size;
+                const uniqueLocations = new Set(filteredData.map(reg => reg.location)).size;
+
+                // Summary section
+                doc.setFontSize(14);
+                doc.text('Riepilogo:', 20, 85);
+
+                doc.setFontSize(10);
+                doc.text(`Ore Totali: ${totalHours.toFixed(1)}h`, 20, 95);
+                doc.text(`Dipendenti: ${uniqueEmployees}`, 20, 105);
+                doc.text(`Luoghi: ${uniqueLocations}`, 20, 115);
+                doc.text(`Registrazioni: ${filteredData.length}`, 20, 125);
+
+                // Data table
+                let yPosition = 145;
+                doc.setFontSize(12);
+                doc.text('Dettaglio Registrazioni:', 20, yPosition);
+                yPosition += 15;
+
+                // Table headers
+                doc.setFontSize(8);
+                doc.text('Data', 20, yPosition);
+                doc.text('Dipendente', 45, yPosition);
+                doc.text('Luogo', 90, yPosition);
+                doc.text('Attività', 130, yPosition);
+                doc.text('Ore', 170, yPosition);
+                yPosition += 10;
+
+                // Table data
+                filteredData.slice(0, 30).forEach(reg => { // Limit to 30 entries for PDF
+                    if (yPosition > 270) {
+                        doc.addPage();
+                        yPosition = 30;
+                    }
+
+                    doc.text(window.UI.formatDate(reg.date), 20, yPosition);
+                    doc.text(reg.employeeName.substring(0, 20), 45, yPosition);
+                    doc.text(reg.location.substring(0, 18), 90, yPosition);
+                    doc.text(reg.activity.substring(0, 15), 130, yPosition);
+                    doc.text(reg.totalHours, 170, yPosition);
+                    yPosition += 8;
+                });
+
+                if (filteredData.length > 30) {
+                    doc.text(`... e altri ${filteredData.length - 30} record`, 20, yPosition + 10);
+                }
+
+                // Save PDF
+                doc.save(`report-${reportType}-${new Date().toISOString().split('T')[0]}.pdf`);
+                window.UI.showToast('Export PDF completato', 'success');
+
+            } else if (format === 'excel') {
+                // Funzione helper per formattare la data
+                function formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const date = new Date(dateStr);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                }
+
+                // Export Excel formattato con filtri applicati
+                let filteredData = filterDataByPeriod(allRegistrations, reportPeriod);
+                filteredData = applyAdvancedFilters(filteredData);
+
+                const headers = ['Data', 'Dipendente', 'Luogo', 'Attività', 'Ora Inizio', 'Ora Fine', 'Ore Totali', 'Note'];
+
+                const data = filteredData.map(reg => [
+                    formatDate(reg.date),
+                    reg.employeeName,
+                    reg.location,
+                    reg.activity,
+                    reg.startTime || '',
+                    reg.endTime || '',
+                    reg.totalHours,
+                    reg.notes || ''
+                ]);
+
+                // Crea il workbook
+                const wb = XLSX.utils.book_new();
+                const ws_data = [headers, ...data];
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+                // Stile per l'intestazione
+                const headerStyle = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "0066FF" } },
+                    alignment: { horizontal: "center", vertical: "center" }
+                };
+
+                // Applica stile all'intestazione
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const address = XLSX.utils.encode_col(C) + "1";
+                    if (!ws[address]) continue;
+                    ws[address].s = headerStyle;
+                }
+
+                // Imposta larghezza colonne
+                ws['!cols'] = [
+                    { wch: 12 }, // Data
+                    { wch: 20 }, // Dipendente
+                    { wch: 25 }, // Luogo
+                    { wch: 20 }, // Attività
+                    { wch: 12 }, // Ora Inizio
+                    { wch: 12 }, // Ora Fine
+                    { wch: 12 }, // Ore Totali
+                    { wch: 40 }  // Note
+                ];
+
+                // Aggiungi bordi e allineamento alle celle dati
+                for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                    for (let C = range.s.c; C <= range.e.c; ++C) {
+                        const address = XLSX.utils.encode_cell({ r: R, c: C });
+                        if (!ws[address]) continue;
+                        ws[address].s = {
+                            border: {
+                                top: { style: "thin", color: { rgb: "D1D5DB" } },
+                                bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+                                left: { style: "thin", color: { rgb: "D1D5DB" } },
+                                right: { style: "thin", color: { rgb: "D1D5DB" } }
+                            },
+                            alignment: { vertical: "center", wrapText: true }
+                        };
+                    }
+                }
+
+                // Aggiungi il foglio al workbook
+                XLSX.utils.book_append_sheet(wb, ws, "Report");
+
+                // Esporta
+                XLSX.writeFile(wb, `report-${reportType}-${new Date().toISOString().split('T')[0]}.xlsx`);
+
+                window.UI.showToast('Export Excel completato', 'success');
+            }
+        }
+    </script>
+
+    <!-- Additional Styles -->
+    <style>
+        .report-section {
+            padding: 0;
+        }
+
+        .bg-blue-50 { background-color: #eff6ff; }
+        .bg-green-50 { background-color: #f0fdf4; }
+        .bg-purple-50 { background-color: #faf5ff; }
+        .bg-orange-50 { background-color: #fff7ed; }
+        .bg-gray-50 { background-color: #f9fafb; }
+
+        .text-blue-600 { color: #2563eb; }
+        .text-blue-700 { color: #1d4ed8; }
+        .text-green-600 { color: #16a34a; }
+        .text-green-700 { color: #15803d; }
+        .text-purple-600 { color: #9333ea; }
+        .text-purple-700 { color: #7c3aed; }
+        .text-orange-600 { color: #ea580c; }
+        .text-orange-700 { color: #c2410c; }
+        .text-indigo-600 { color: #4f46e5; }
+
+        .border-blue-200 { border-color: #bfdbfe; }
+
+        .from-blue-50 { --tw-gradient-from: #eff6ff; }
+        .to-indigo-50 { --tw-gradient-to: #eef2ff; }
+        .bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to)); }
+
+        .space-y-1 > * + * { margin-top: 0.25rem; }
+
+        .card-compact {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+    </style>
+</body>
+</html>

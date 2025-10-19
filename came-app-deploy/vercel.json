@@ -1,0 +1,92 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    {
+      "src": "/css/(.*)",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/js/$1"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/admin-approvals",
+      "dest": "/admin-approvals.html"
+    },
+    {
+      "src": "/admin-dashboard",
+      "dest": "/admin-dashboard.html"
+    },
+    {
+      "src": "/admin-employee-hours",
+      "dest": "/admin-employee-hours.html"
+    },
+    {
+      "src": "/admin-reports",
+      "dest": "/admin-reports.html"
+    },
+    {
+      "src": "/employee-dashboard",
+      "dest": "/employee-dashboard.html"
+    },
+    {
+      "src": "/register",
+      "dest": "/register.html"
+    },
+    {
+      "src": "/requests",
+      "dest": "/requests.html"
+    },
+    {
+      "src": "/time-registration",
+      "dest": "/time-registration.html"
+    },
+    {
+      "src": "/timesheet",
+      "dest": "/timesheet.html"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/css/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/js/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
+      ]
+    }
+  ]
+}
