@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAME - Agenda Aziendale Intelligente</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/effects.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/agenda.css">
+</head>
+<body>
+    <!-- Navigation Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00D9B1;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="24" cy="24" r="22" fill="url(#logoGradient)"/>
+                        <path d="M18 16C21.866 16 25 19.134 25 23C25 26.866 21.866 30 18 30"
+                              stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M29 30L33 16L37 30"
+                              stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M31 26H35"
+                              stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h1 class="sidebar-title gradient-text">CAME</h1>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-link" id="dashboardLink">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="business-agenda.html" class="sidebar-link active">
+                <i data-lucide="calendar"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="time-registration.html" class="sidebar-link">
+                <i data-lucide="clock"></i>
+                <span>Timbrature</span>
+            </a>
+            <a href="requests.html" class="sidebar-link">
+                <i data-lucide="inbox"></i>
+                <span>Richieste</span>
+            </a>
+            <a href="timesheet.html" class="sidebar-link">
+                <i data-lucide="calendar-check"></i>
+                <span>Timesheet</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="sidebar-link" id="logoutBtn">
+                <i data-lucide="log-out"></i>
+                <span>Esci</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-content">
+                <div>
+                    <h1 class="page-title gradient-text-primary">Agenda Aziendale Intelligente</h1>
+                    <p class="page-subtitle">Organizza i tuoi impegni con l'assistenza AI</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="aiSuggestBtn">
+                        <i data-lucide="sparkles"></i>
+                        Suggerimenti AI
+                    </button>
+                    <button class="btn btn-primary" id="newEventBtn">
+                        <i data-lucide="plus"></i>
+                        Nuovo Evento
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Agenda Content -->
+        <div class="agenda-container">
+            <!-- Filters and Views -->
+            <div class="agenda-toolbar">
+                <div class="view-selector">
+                    <button class="view-btn" data-view="day">Giorno</button>
+                    <button class="view-btn" data-view="week">Settimana</button>
+                    <button class="view-btn active" data-view="month">Mese</button>
+                </div>
+
+                <div class="date-navigator">
+                    <button class="btn-icon" id="prevPeriod">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <h2 class="current-period" id="currentPeriod">Novembre 2025</h2>
+                    <button class="btn-icon" id="nextPeriod">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" id="todayBtn">Oggi</button>
+                </div>
+
+                <div class="filter-actions">
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="all">Tutte le categorie</option>
+                        <option value="meeting">Riunioni</option>
+                        <option value="deadline">Scadenze</option>
+                        <option value="task">Attività</option>
+                        <option value="personal">Personale</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Main Agenda Grid -->
+            <div class="agenda-grid">
+                <!-- Left Panel - Calendar -->
+                <div class="calendar-panel">
+                    <div class="mini-calendar">
+                        <div class="calendar-header">
+                            <div class="calendar-weekdays">
+                                <div class="weekday">Lun</div>
+                                <div class="weekday">Mar</div>
+                                <div class="weekday">Mer</div>
+                                <div class="weekday">Gio</div>
+                                <div class="weekday">Ven</div>
+                                <div class="weekday">Sab</div>
+                                <div class="weekday">Dom</div>
+                            </div>
+                        </div>
+                        <div class="calendar-days" id="calendarDays">
+                            <!-- Days will be generated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- AI Insights -->
+                    <div class="ai-insights card">
+                        <div class="card-header">
+                            <i data-lucide="sparkles" style="color: var(--accent-purple);"></i>
+                            <h3>Suggerimenti AI</h3>
+                        </div>
+                        <div class="insights-list" id="aiInsightsList">
+                            <div class="insight-item">
+                                <i data-lucide="alert-circle" style="color: var(--status-warning);"></i>
+                                <div>
+                                    <p class="insight-title">Carico di lavoro elevato</p>
+                                    <p class="insight-text">Hai 5 eventi domani. Considera di riprogrammare alcuni impegni.</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <i data-lucide="clock" style="color: var(--primary-600);"></i>
+                                <div>
+                                    <p class="insight-title">Tempo di preparazione</p>
+                                    <p class="insight-text">Riunione importante tra 2 ore. Ti consiglio di prepararti.</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <i data-lucide="trending-up" style="color: var(--status-success);"></i>
+                                <div>
+                                    <p class="insight-title">Produttività</p>
+                                    <p class="insight-text">Le tue ore più produttive sono 9-11. Programma le attività importanti in questo orario.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="quick-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #0066FF 0%, #00D9B1 100%);">
+                                <i data-lucide="calendar-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <p class="stat-label">Eventi Oggi</p>
+                                <p class="stat-value" id="todayEventsCount">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);">
+                                <i data-lucide="clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <p class="stat-label">Ore Pianificate</p>
+                                <p class="stat-value" id="plannedHours">0h</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Events List -->
+                <div class="events-panel">
+                    <div class="events-header">
+                        <h3>Eventi del Mese</h3>
+                        <div class="search-box">
+                            <i data-lucide="search"></i>
+                            <input type="text" placeholder="Cerca eventi..." id="searchEvents">
+                        </div>
+                    </div>
+
+                    <div class="events-list" id="eventsList">
+                        <!-- Events will be generated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Event Modal -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Nuovo Evento</h2>
+                <button class="modal-close" id="closeModal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <form id="eventForm" class="modal-body">
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="eventTitle">Titolo Evento *</label>
+                        <input type="text" id="eventTitle" name="title" required placeholder="Es: Riunione di Team">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventDate">Data *</label>
+                        <input type="date" id="eventDate" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventCategory">Categoria *</label>
+                        <select id="eventCategory" name="category" required>
+                            <option value="">Seleziona...</option>
+                            <option value="meeting">Riunione</option>
+                            <option value="deadline">Scadenza</option>
+                            <option value="task">Attività</option>
+                            <option value="personal">Personale</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventStartTime">Ora Inizio</label>
+                        <input type="time" id="eventStartTime" name="startTime">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventEndTime">Ora Fine</label>
+                        <input type="time" id="eventEndTime" name="endTime">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventPriority">Priorità</label>
+                        <select id="eventPriority" name="priority">
+                            <option value="low">Bassa</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventReminder">Promemoria</label>
+                        <select id="eventReminder" name="reminder">
+                            <option value="none">Nessuno</option>
+                            <option value="15">15 minuti prima</option>
+                            <option value="30" selected>30 minuti prima</option>
+                            <option value="60">1 ora prima</option>
+                            <option value="1440">1 giorno prima</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="eventLocation">Luogo</label>
+                        <input type="text" id="eventLocation" name="location" placeholder="Es: Sala Conferenze A">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="eventDescription">Descrizione</label>
+                        <textarea id="eventDescription" name="description" rows="4" placeholder="Aggiungi dettagli sull'evento..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label>
+                            <input type="checkbox" id="eventAllDay" name="allDay">
+                            Evento di tutta la giornata
+                        </label>
+                    </div>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelEventBtn">Annulla</button>
+                <button type="submit" form="eventForm" class="btn btn-primary" id="saveEventBtn">
+                    <i data-lucide="save"></i>
+                    Salva Evento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+
+    <!-- JavaScript Modules -->
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/agenda.js"></script>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Check authentication
+        if (!window.Auth || !window.Auth.isAuthenticated()) {
+            window.location.replace('index.html');
+        }
+
+        // Setup dashboard link based on user role
+        const user = window.Auth.getCurrentUser();
+        if (user) {
+            const dashboardLink = document.getElementById('dashboardLink');
+            dashboardLink.href = user.role === 'admin' ? 'admin-dashboard.html' : 'employee-dashboard.html';
+        }
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            if (confirm('Sei sicuro di voler uscire?')) {
+                await window.Auth.logout();
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
